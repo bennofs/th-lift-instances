@@ -13,6 +13,7 @@ synopsis:      Lift instances for template-hasell for common data types.
 description:   Most data types in haskell platform do not have Lift instances. This package provides orphan instances
 	       for containers, text and bytestring.
 build-type:    Custom
+category:      Template Haskell
 
 extra-source-files:
   .ghci
