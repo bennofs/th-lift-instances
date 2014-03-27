@@ -12,10 +12,8 @@ import System.Exit
 import Test.QuickCheck.All
 
 import qualified Data.IntMap as IntMap
-import qualified Data.IntMap.Strict as IntMap.Strict
 import qualified Data.IntSet as IntSet
 import qualified Data.Map as Map
-import qualified Data.Map.Strict as Map.Strict
 import qualified Data.Sequence as Sequence
 import qualified Data.Set as Set
 
@@ -62,14 +60,8 @@ prop_double = $(lift (1.1 :: Double)) == (1.1 :: Double)
 prop_lazy_int_map :: Bool
 prop_lazy_int_map = $(lift $ IntMap.fromList mapdata) == IntMap.fromList mapdata
 
-prop_strict_int_map :: Bool
-prop_strict_int_map = $(lift $ IntMap.Strict.fromList mapdata) == IntMap.Strict.fromList mapdata
-
 prop_lazy_map :: Bool
 prop_lazy_map = $(lift $ Map.fromList mapdata) == Map.fromList mapdata
-
-prop_strict_map :: Bool
-prop_strict_map = $(lift $ Map.Strict.fromList mapdata) == Map.Strict.fromList mapdata
 
 prop_int_set :: Bool
 prop_int_set = $(lift $ IntSet.fromList setdata) == IntSet.fromList setdata
