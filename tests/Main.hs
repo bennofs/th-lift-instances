@@ -23,6 +23,11 @@ import qualified Data.Text.Lazy as Text.Lazy
 import qualified Data.ByteString as ByteString
 import qualified Data.ByteString.Lazy as ByteString.Lazy
 
+import qualified Data.Vector as Vector.Boxed
+import qualified Data.Vector.Primitive as Vector.Primitive
+import qualified Data.Vector.Storable as Vector.Storable
+import qualified Data.Vector.Unboxed as Vector.Unboxed
+
 --------------------------------------------------------------------------------
 -- Base
 prop_word8 :: Bool
@@ -91,7 +96,21 @@ prop_bytestring = $(lift $ ByteString.pack bytedata) == ByteString.pack bytedata
 prop_lazy_bytestring :: Bool
 prop_lazy_bytestring = $(lift $ ByteString.Lazy.pack bytedata) == ByteString.Lazy.pack bytedata
 
+--------------------------------------------------------------------------------
+-- Vector
+prop_boxed_vector :: Bool
+prop_boxed_vector = $(lift $ Vector.Boxed.fromList bytedata) == Vector.Boxed.fromList bytedata
+
+prop_unboxed_vector :: Bool
+prop_unboxed_vector = $(lift $ Vector.Unboxed.fromList bytedata) == Vector.Unboxed.fromList bytedata
+
+prop_primitive_vector :: Bool
+prop_primitive_vector = $(lift $ Vector.Primitive.fromList bytedata) == Vector.Primitive.fromList bytedata
+
+prop_storable_vector :: Bool
+prop_storable_vector = $(lift $ Vector.Storable.fromList bytedata) == Vector.Storable.fromList bytedata
+
 main :: IO ()
-main = do 
+main = do
   success <- $quickCheckAll
   unless success exitFailure

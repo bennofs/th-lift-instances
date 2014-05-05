@@ -1,8 +1,8 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE TemplateHaskell #-}
-module Instances.TH.Lift 
+module Instances.TH.Lift
   ( -- | This module provides orphan instances for the 'Language.Haskell.TH.Syntax.Lift' class from template-haskell. Following is a list of the provided instances.
-    -- 
+    --
     -- Lift instances are useful to precompute values at compile time using template haskell. For example, if you write the following code,
     -- you can make sure that @3 * 10@ is really computed at compile time:
     --
@@ -14,6 +14,8 @@ module Instances.TH.Lift
     -- > expensiveComputation = $(lift $ 3 * 10) -- This will computed at compile time
     --
     -- This uses the Lift instance for Word32.
+    --
+    -- The following instances are provided by this package:
 
     -- * Base
     -- |  * 'Word8', 'Word16', 'Word32', 'Word64'
@@ -22,11 +24,11 @@ module Instances.TH.Lift
 
     -- * Containers (both strict/lazy)
     -- |  * 'Data.IntMap.IntMap'
-    -- 
+    --
     --    * 'Data.IntSet.IntSet'
-    --    
+    --
     --    * 'Data.Map.Map'
-    -- 
+    --
     --    * 'Data.Set.Set'
     --
     --    * 'Data.Tree.Tree'
@@ -34,10 +36,14 @@ module Instances.TH.Lift
     --    * 'Data.Sequence.Seq'
 
     -- * ByteString (both strict/lazy)
-    -- |  * 'Data.ByteString'
-    
+    -- |  * 'Data.ByteString.ByteString'
+
     -- * Text (both strict/lazy)
-    -- |  * 'Data.Text'
+    -- |  * 'Data.Text.Text'
+
+    -- * Vector (Boxed, Unboxed, Storable, Primitive)
+    -- |  * 'Data.Vector.Vector'
+
   ) where
 
 import Language.Haskell.TH
@@ -64,6 +70,12 @@ import qualified Data.Text.Lazy as Text.Lazy
 -- ByteString
 import qualified Data.ByteString as ByteString
 import qualified Data.ByteString.Lazy as ByteString.Lazy
+
+-- Vector
+import qualified Data.Vector as Vector.Boxed
+import qualified Data.Vector.Primitive as Vector.Primitive
+import qualified Data.Vector.Storable as Vector.Storable
+import qualified Data.Vector.Unboxed as Vector.Unboxed
 --------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------
@@ -104,7 +116,7 @@ instance Lift v => Lift (IntMap.IntMap v) where
   lift m = [| IntMap.fromList $(lift $ IntMap.toList m) |]
 
 instance Lift IntSet.IntSet where
-  lift s = [| IntSet.fromList $(lift $ IntSet.toList s) |] 
+  lift s = [| IntSet.fromList $(lift $ IntSet.toList s) |]
 
 instance (Lift k, Lift v) => Lift (Map.Map k v) where
   lift m = [| Map.fromList $(lift $ Map.toList m) |]
@@ -132,3 +144,17 @@ instance Lift ByteString.ByteString where
 
 instance Lift ByteString.Lazy.ByteString where
   lift b = [| ByteString.Lazy.pack $(lift $ ByteString.Lazy.unpack b) |]
+
+--------------------------------------------------------------------------------
+-- Vector
+instance (Vector.Primitive.Prim a, Lift a) => Lift (Vector.Primitive.Vector a) where
+  lift v = [| Vector.Primitive.fromList $(lift $ Vector.Primitive.toList v) |]
+
+instance (Vector.Storable.Storable a, Lift a) => Lift (Vector.Storable.Vector a) where
+  lift v = [| Vector.Storable.fromList $(lift $ Vector.Storable.toList v) |]
+
+instance (Vector.Unboxed.Unbox a, Lift a) => Lift (Vector.Unboxed.Vector a) where
+  lift v = [| Vector.Unboxed.fromList $(lift $ Vector.Unboxed.toList v) |]
+
+instance Lift a => Lift (Vector.Boxed.Vector a) where
+  lift v = [| Vector.Boxed.fromList $(lift $ Vector.Boxed.toList v) |]
