@@ -1,5 +1,5 @@
 name:          th-lift-instances
-version:       0.1.1
+version:       0.1.2
 license:       BSD3
 cabal-version: >= 1.10
 license-file:  LICENSE
@@ -9,9 +9,9 @@ stability:     experimental
 homepage:      http://github.com/bennofs/th-lift-instances/
 bug-reports:   http://github.com/bennofs/th-lift-instances/issues
 copyright:     Copyright (C) 2013-2014 Benno Fünfstück
-synopsis:      Lift instances for template-hasell for common data types.
+synopsis:      Lift instances for template-haskell for common data types.
 description:   Most data types in haskell platform do not have Lift instances. This package provides orphan instances
-	       for containers, text and bytestring.
+	       for containers, text, bytestring and vector.
 build-type:    Custom
 category:      Template Haskell
 
