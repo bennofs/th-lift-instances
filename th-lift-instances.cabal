@@ -8,7 +8,7 @@ maintainer:    Benno Fünfstück <benno.fuenfstueck@gmail.com>
 stability:     experimental
 homepage:      http://github.com/bennofs/th-lift-instances/
 bug-reports:   http://github.com/bennofs/th-lift-instances/issues
-copyright:     Copyright (C) 2013 Benno Fünfstück
+copyright:     Copyright (C) 2013-2014 Benno Fünfstück
 synopsis:      Lift instances for template-hasell for common data types.
 description:   Most data types in haskell platform do not have Lift instances. This package provides orphan instances
 	       for containers, text and bytestring.
