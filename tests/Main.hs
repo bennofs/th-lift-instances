@@ -110,6 +110,7 @@ prop_primitive_vector = $(lift $ Vector.Primitive.fromList bytedata) == Vector.P
 prop_storable_vector :: Bool
 prop_storable_vector = $(lift $ Vector.Storable.fromList bytedata) == Vector.Storable.fromList bytedata
 
+return []
 main :: IO ()
 main = do
   success <- $quickCheckAll
