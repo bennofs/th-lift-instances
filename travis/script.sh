@@ -48,7 +48,7 @@ step_suppress "Checking source distribution" << 'EOF'
   SRC_TGZ=$(cabal-$CABALVER info . | awk '{print $2 ".tar.gz";exit}')
   cd dist/
   if [ -f "$SRC_TGZ" ]; then
-    cabal-$CABALVER install "$SRC_TGZ"
+    cabal-$CABALVER install --enable-tests --enable-benchmarks "$SRC_TGZ"
   else
     echo "expected '$SRC_TGZ' not found"
     exit 1
