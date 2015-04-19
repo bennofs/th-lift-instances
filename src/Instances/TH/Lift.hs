@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell, CPP #-}
 module Instances.TH.Lift
   ( -- | This module provides orphan instances for the 'Language.Haskell.TH.Syntax.Lift' class from template-haskell. Following is a list of the provided instances.
     --
@@ -79,7 +79,9 @@ import qualified Data.Vector.Unboxed as Vector.Unboxed
 --------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------
+#if !MIN_VERSION_template_haskell(2,9,1)
 -- Base
+
 instance Lift Word8 where
   lift x = [| fromInteger $(lift $ toInteger x) :: Word8 |]
 
@@ -109,6 +111,8 @@ instance Lift Float where
 
 instance Lift Double where
   lift x = [| $(litE $ rationalL $ toRational x) :: Double |]
+
+# endif
 
 --------------------------------------------------------------------------------
 -- Containers
