@@ -21,6 +21,8 @@ import System.Directory
 import System.FilePath
 import Test.DocTest
 
+import Prelude
+
 ##ifdef mingw32_HOST_ARCH
 ##ifdef i386_HOST_ARCH
 ##define USE_CP
