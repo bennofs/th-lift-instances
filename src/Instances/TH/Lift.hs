@@ -46,14 +46,16 @@ module Instances.TH.Lift
 
   ) where
 
-import Language.Haskell.TH
 import Language.Haskell.TH.Lift
 
 import qualified Data.Foldable as F
 
 -- Base
+#if !MIN_VERSION_template_haskell(2,9,1)
+import Language.Haskell.TH
 import Data.Int
 import Data.Word
+#endif
 
 -- Containers
 import qualified Data.IntMap as IntMap
