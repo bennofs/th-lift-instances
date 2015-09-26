@@ -18,12 +18,10 @@ script:
 
 matrix:
   include:
-    - env: GHCVER=7.4.2 CABALVER=1.16
-      addons: {apt: {packages: [cabal-install-1.16, ghc-7.4.2 alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
     - env: GHCVER=7.6.3 CABALVER=1.18
       addons: {apt: {packages: [cabal-install-1.18, ghc-7.6.3, alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
     - env: GHCVER=7.8.4 CABALVER=1.22
-      addons: {apt: {packages: [cabal-install-1.18, ghc-7.8.4, alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
+      addons: {apt: {packages: [cabal-install-1.22, ghc-7.8.4, alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
     - env: GHCVER=7.10.1 CABALVER=1.22
-      addons: {apt: {packages: [cabal-install-1.18, ghc-7.10.2, alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
+      addons: {apt: {packages: [cabal-install-1.22, ghc-7.10.2, alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
   fast_finish: true
