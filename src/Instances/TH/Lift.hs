@@ -46,7 +46,8 @@ module Instances.TH.Lift
 
   ) where
 
-import Language.Haskell.TH.Lift
+import Language.Haskell.TH.Lift (deriveLift)
+import Language.Haskell.TH.Syntax (Lift(..))
 
 import qualified Data.Foldable as F
 
