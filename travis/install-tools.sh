@@ -2,8 +2,6 @@
 
 set -e
 
-ls -l $HOME/tools/.cabal-sandbox
-
 if [ ! -d $HOME/tools/bin ]; then
     mkdir -p $HOME/tools
     cd $HOME/tools
