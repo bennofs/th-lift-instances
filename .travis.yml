@@ -1,8 +1,10 @@
+language: c
 sudo: false
 cache:
   directories:
     - $HOME/tools
 before_install:
+ - unset CC
  - travis_retry cabal-$CABALVER update
  - export PATH=/opt/ghc/$GHCVER/bin:/opt/happy/1.19.5/bin:/opt/alex/3.1.4/bin:~/tools/bin:$PATH
  - travis/install-tools.sh
@@ -15,9 +17,12 @@ script:
 matrix:
   include:
     - env: GHCVER=7.6.3 CABALVER=1.18
+      compiler: ": #GHC 7.6.3"
       addons: {apt: {packages: [cabal-install-1.18, ghc-7.6.3, alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
     - env: GHCVER=7.8.4 CABALVER=1.18
+      compiler: ": #GHC 7.8.4"
       addons: {apt: {packages: [cabal-install-1.18, ghc-7.8.4, alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
     - env: GHCVER=7.10.2 CABALVER=1.22
+      compiler: ": #GHC 7.10.2"
       addons: {apt: {packages: [cabal-install-1.22, ghc-7.10.2, alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
   fast_finish: true
