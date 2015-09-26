@@ -12,8 +12,8 @@ install:
  - cabal-$CABALVER install --only-dependencies --enable-tests --enable-benchmarks -j
 script:
  - travis/script.sh
- - hlint --cpp-simple src
- - packunused
+ - [ -z "$ROOT" ] || hlint --cpp-simple src
+ - [ -z "$ROOT" ] || packunused
 matrix:
   include:
     - env: GHCVER=7.6.3 CABALVER=1.18
@@ -22,7 +22,7 @@ matrix:
     - env: GHCVER=7.8.4 CABALVER=1.18
       compiler: ": #GHC 7.8.4"
       addons: {apt: {packages: [cabal-install-1.18, ghc-7.8.4, alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
-    - env: GHCVER=7.10.2 CABALVER=1.22
+    - env: GHCVER=7.10.2 CABALVER=1.22 ROOT=1
       compiler: ": #GHC 7.10.2"
       addons: {apt: {packages: [cabal-install-1.22, ghc-7.10.2, alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
   fast_finish: true
