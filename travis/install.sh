@@ -41,17 +41,11 @@ fi
 if [ ! -z $ROOT ]; then
   step "Installing tools" << EOF
     if [ ! -d $HOME/tools/bin ]; then
-      rm -rf $HOME/tools
       mkdir -p $HOME/tools
       cd $HOME/tools
-      echo $PWD:$HOME
       cabal sandbox init
       cabal install hlint packunused
-      echo $PWD
-      ln -s $PWD/.cabal-sandbox/bin $PWD/bin
-      ls -alR $PWD
-      cd $TRAVIS_BUILD_DIR
-      ls -alR $HOME/tools
+      ln -s $HOME/tools/.cabal-sandbox/bin $HOME/tools/bin
     else
       echo "Tools already installed"
     fi
