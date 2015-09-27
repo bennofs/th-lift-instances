@@ -7,7 +7,7 @@ before_install:
  - export PATH=/opt/ghc/$GHCVER/bin:/opt/happy/1.19.5/bin:/opt/alex/3.1.4/bin:~/tools/bin:$PATH
  - test -z "$ROOT" || travis/install-tools.sh
 install:
- - cabal-$CABALVER install --only-dependencies --enable-tests --enable-benchmarks -j
+ - cabal-$CABALVER install --only-dependencies --enable-tests --enable-benchmarks -j --allow-newer="$ALLOW_NEWER"
 script:
  - travis/script.sh
 matrix:
@@ -27,9 +27,9 @@ matrix:
       cache:
         directories:
           - $HOME/tools
-    - env: GHCVER=head CABALVER=head
+    - env: GHCVER=head CABALVER=head ALLOW_NEWER="template-haskell"
       compiler: ": #GHC head"
       addons: {apt: {packages: [cabal-install-head, ghc-head, alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
   allow_failures:
-    - env: GHCVER=head CABALVER=head
+    - compiler: ": #GHC head"
   fast_finish: true
