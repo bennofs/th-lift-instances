@@ -1,13 +1,28 @@
 language: c
 sudo: false
+
+cache:
+  directories:
+    - $HOME/.cabsnap
+    - $HOME/.cabal/packages
+
+before_cache:
+  - rm -f $HOME/.cabal/packages/hackage.haskell.org/build-reports.log
+  - rm -f $HOME/.cabal/packages/hackage.haskell.org/00-index.tar
+
 before_install:
  - unset CC
- - travis_retry cabal-$CABALVER update
- - sed -i 's/^jobs:/-- jobs:/' ${HOME}/.cabal/config
- - export PATH=/opt/ghc/$GHCVER/bin:/opt/happy/1.19.5/bin:/opt/alex/3.1.4/bin:~/tools/bin:$PATH
- - test -z "$ROOT" || travis/install-tools.sh
+ - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:/opt/happy/1.19.5/bin:/opt/alex/3.1.4/bin:~/tools/bin:$PATH
+ - if [ -f $HOME/.cabal/packages/hackage.haskell.org/00-index.tar.gz ];
+   then
+     zcat $HOME/.cabal/packages/hackage.haskell.org/00-index.tar.gz >
+          $HOME/.cabal/packages/hackage.haskell.org/00-index.tar;
+   fi
+ - travis_retry cabal update
+ - sed -i 's/^jobs:.*$/jobs: 2/' ${HOME}/.cabal/config  # travis docker containers report incorrect number of cores
 install:
- - cabal-$CABALVER install --only-dependencies --enable-tests --enable-benchmarks -j ${ALLOW_NEWER:+--allow-newer="$ALLOW_NEWER"}
+ - test -z "$ROOT" || travis/install-tools.sh
+ - travis/install-deps.sh
 script:
  - travis/script.sh
 matrix:

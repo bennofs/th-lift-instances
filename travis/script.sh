@@ -1,54 +1,37 @@
 #!/usr/bin/env bash
 
-green='\e[0;32m'
-red='\e[0;31m'
-nc='\e[0m' # No Color
-
-function step {
-  echo -e "${green}$1 ...${nc}"
-  bash /dev/stdin || exit 1
-}
-
-function step_suppress {
-  echo -ne "${green}$1 ... ${nc}"
-  tmp=$(mktemp)
-  bash /dev/stdin &> $tmp && echo -e "${green}Done${nc}" || (
-    echo -e "${red}Failed${nc}"
-    echo "Output: "
-    cat $tmp
-    exit 1
-  )
-}
+. travis/lib.sh
 
 step "Configuring project" << 'EOF'
-  tmp=$(mktemp)
-  cabal-$CABALVER configure --enable-tests --enable-benchmarks -v2 --ghc-options="-Wall -Werror -ddump-minimal-imports" &> $tmp || (
-    cat $tmp
+  cabal configure --enable-tests --enable-benchmarks -v2 --ghc-options="-Wall -Werror -ddump-minimal-imports" &> cabal.log || (
+    cat cabal.log 
     exit 1
   )
   echo "Using packages: "
-  sed -nre 's/Dependency ([^ ]*) ==([^ :]*).*/\1 \2/p' $tmp | column -t | sed -e "s/^/  /"
+  sed -nre 's/Dependency ([^ ]*) ==([^ :]*).*/\1 \2/p' cabal.log | column -t | sed -e "s/^/  /"
+  echo "Flags chosen: "
+  sed -nr -e ':x; /\,$/ { N; s/,\n/,/; tx }' -e 's/Flags chosen: (.*)/\1/' -e 's/, /,/gp' cabal.log | tr ',' '\n'
 EOF
 
 step "Building project" << EOF
-  cabal-$CABALVER build
+  cabal build
 EOF
 
 step "Running tests" << EOF
-  cabal-$CABALVER test
+  cabal test
 EOF
 
 step "Creating source distribution" << EOF
-  cabal-$CABALVER check
-  cabal-$CABALVER sdist # tests that a source-distribution can be generated
+  cabal check
+  cabal sdist # tests that a source-distribution can be generated
 EOF
 
 step_suppress "Checking source distribution" << 'EOF'
   # The following scriptlet checks that the resulting source distribution can be built & installed
-  SRC_TGZ=$(cabal-$CABALVER info . | awk '{print $2 ".tar.gz";exit}')
+  SRC_TGZ=$(cabal info . | awk '{print $2 ".tar.gz";exit}')
   cd dist/
   if [ -f "$SRC_TGZ" ]; then
-    cabal-$CABALVER install --enable-tests --enable-benchmarks "$SRC_TGZ"
+    cabal install --enable-tests --enable-benchmarks "$SRC_TGZ"
   else
     echo "expected '$SRC_TGZ' not found"
     exit 1
