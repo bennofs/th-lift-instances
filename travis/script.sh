@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
 
+begin_steps
+
+if [ -n "$ROOT" ]; then
+  step "Checking style with HLint" << EOF
+    hlint --cpp-simple src tests
+EOF
+fi
+
+set -e
 step "Configuring project" << 'EOF'
   cabal configure --enable-tests --enable-benchmarks -v2 --ghc-options="-Wall -Werror -ddump-minimal-imports" &> cabal.log || (
     cat cabal.log 
@@ -14,6 +23,14 @@ EOF
 step "Building project" << EOF
   cabal build
 EOF
+
+set +e
+if [ -n "$ROOT" ]; then
+  step_suppress "Checking for unused dependencies" << EOF
+    packunused
+EOF
+fi
+set -e
 
 step "Running tests" << EOF
   cabal test
@@ -36,12 +53,4 @@ step_suppress "Checking source distribution" << 'EOF'
   fi    
 EOF
 
-[ -z "$ROOT" ] && exit 0 || true
-
-step "Checking style with HLint" << EOF
-  hlint --cpp-simple src tests
-EOF
-
-step_suppress "Checking for unused dependencies" << EOF
-  packunused
-EOF
+end_steps

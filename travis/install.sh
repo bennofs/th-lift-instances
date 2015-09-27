@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+set -e
+
+begin_steps
+
 # We will first compute cabal's install plan. If it matches the install plan in the cache,
 # we can reuse the cache. Otherwise, we will throw away the cache to avoid interfering with
 # cabal's solver.
@@ -48,3 +52,5 @@ if [ ! -z $ROOT ]; then
     fi
 EOF
 fi
+
+end_steps
