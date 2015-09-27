@@ -18,6 +18,7 @@ function step {
   local result=0
   echo -e "${green}$1 ...${nc}"
   bash /dev/stdin || result=1
+  echo "result: $result"
   export STEP_FAILED=$(( $STEP_FAILED || $result ))
   return $result
 }
