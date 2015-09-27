@@ -45,7 +45,9 @@ if [ ! -z $ROOT ]; then
       cd $HOME/tools
       cabal sandbox init
       cabal install hlint packunused
+      echo $PWD
       ln -s $PWD/.cabal-sandbox/bin $PWD/bin
+      ls -alR $PWD
       cd $TRAVIS_BUILD_DIR
       ls -alR $HOME/tools
     else
