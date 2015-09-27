@@ -19,7 +19,7 @@ function step {
   echo -e "${green}$1 ...${nc}"
   bash /dev/stdin || result=1
   export STEP_FAILED=$(( $STEP_FAILED || $result ))
-  return result
+  return $result
 }
 
 function step_suppress {
