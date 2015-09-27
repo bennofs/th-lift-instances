@@ -7,7 +7,7 @@ cache:
 before_cache:
   - rm -f $HOME/.cabal/packages/hackage.haskell.org/build-reports.log
   - rm -f $HOME/.cabal/packages/hackage.haskell.org/00-index.tar
-before_install: travis/setup.sh
+before_install: source travis/setup.sh
 install: travis/install.sh
 script: travis/script.sh
 matrix:
