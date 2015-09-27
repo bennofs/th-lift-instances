@@ -2,13 +2,13 @@
 
 set -e
 
-green='\e[0;32m'
-red='\e[0;31m'
-nc='\e[0m' # No Color
+export green='\e[0;32m'
+export red='\e[0;31m'
+export nc='\e[0m' # No Color
 
 function step {
   echo -e "${green}$1 ...${nc}"
-  bash /dev/stdin || exit 1
+  bash /dev/stdin
 }
 
 function step_suppress {
