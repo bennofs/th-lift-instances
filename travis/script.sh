@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-. travis/lib.sh
-
 step "Configuring project" << 'EOF'
   cabal configure --enable-tests --enable-benchmarks -v2 --ghc-options="-Wall -Werror -ddump-minimal-imports" &> cabal.log || (
     cat cabal.log 

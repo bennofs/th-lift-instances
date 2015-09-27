@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-. travis/lib.sh
-
 # We will first compute cabal's install plan. If it matches the install plan in the cache,
 # we can reuse the cache. Otherwise, we will throw away the cache to avoid interfering with
 # cabal's solver.
