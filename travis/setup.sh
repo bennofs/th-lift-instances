@@ -17,8 +17,7 @@ function end_steps {
 function step {
   local result=0
   echo -e "${green}$1 ...${nc}"
-  bash /dev/stdin || result=1
-  echo "result: $result"
+  bash -e /dev/stdin || result=1
   export STEP_FAILED=$(( $STEP_FAILED || $result ))
   return $result
 }
@@ -26,7 +25,7 @@ function step {
 function step_suppress {
   echo -ne "${green}$1 ... ${nc}"
   tmp=$(mktemp)
-  if ! ( bash /dev/stdin &> $tmp && echo -e "${green}Done${nc}" && rm -f $tmp ); then
+  if ! ( bash -e /dev/stdin &> $tmp && echo -e "${green}Done${nc}" && rm -f $tmp ); then
     echo -e "${red}Failed${nc}"
     echo "Output: "
     cat $tmp
