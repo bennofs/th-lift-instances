@@ -12,8 +12,8 @@ install:
  - cabal-$CABALVER install --only-dependencies --enable-tests --enable-benchmarks -j
 script:
  - travis/script.sh
- - [ -z "$ROOT" ] || hlint --cpp-simple src
- - [ -z "$ROOT" ] || packunused
+ - test -z "$ROOT" || hlint --cpp-simple src
+ - test -z "$ROOT" || packunused
 matrix:
   include:
     - env: GHCVER=7.6.3 CABALVER=1.18
