@@ -29,7 +29,7 @@ else
     rm -rf $HOME/.cabsnap
     mkdir -p $HOME/.ghc $HOME/.cabal/lib $HOME/.cabal/share $HOME/.cabal/bin
     cabal install --only-dependencies --enable-tests --enable-benchmarks ${ALLOW_NEWER:+--allow-newer="$ALLOW_NEWER"}
-    if [ "$GHCVER" = "7.10.1"]; then cabal install Cabal-1.22.4.0; fi
+    if [ "$GHCVER" = "7.10.1" ]; then cabal install Cabal-1.22.4.0; fi
 EOF
   step "Saving build cache" << EOF
     mkdir $HOME/.cabsnap
