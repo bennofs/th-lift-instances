@@ -22,7 +22,7 @@ function step_suppress {
   )
 }
 
-export -f step step_supress
+export -f step step_suppress
 
 unset CC
 export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:/opt/happy/1.19.5/bin:/opt/alex/3.1.4/bin:~/tools/bin:$PATH
