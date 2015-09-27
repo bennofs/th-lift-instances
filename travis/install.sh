@@ -35,3 +35,18 @@ EOF
     cp -a $HOME/.cabal/lib $HOME/.cabal/share $HOME/.cabal/bin installplan.txt $HOME/.cabsnap/
 EOF
 fi
+
+if [ ! -z $ROOT ]; then
+  step "Installing tools" << EOF
+    if [ ! -d $HOME/tools/bin ]; then
+      mkdir -p $HOME/tools
+      cd $HOME/tools
+      cabal sandbox init
+      cabal install hlint packunused -j
+      ln -s $PWD/.cabal-sandbox/bin $PWD/bin
+      cd $TRAVIS_BUILD_DIR
+    else
+      echo "Tools already installed"
+    fi
+EOF
+fi
