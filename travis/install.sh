@@ -43,6 +43,7 @@ if [ ! -z $ROOT ]; then
     if [ ! -d $HOME/tools/bin ]; then
       mkdir -p $HOME/tools
       cd $HOME/tools
+      echo $PWD:$HOME
       cabal sandbox init
       cabal install hlint packunused
       echo $PWD
