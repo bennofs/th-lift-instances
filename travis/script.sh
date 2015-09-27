@@ -54,3 +54,13 @@ step_suppress "Checking source distribution" << 'EOF'
     exit 1
   fi    
 EOF
+
+[ -z "$ROOT" ] && exit 0 || true
+
+step "Checking style with HLint" << EOF
+  hlint --cpp-simple srcs
+EOF
+
+step_suppress "Checking for unused dependencies" << EOF
+  packunused
+EOF
