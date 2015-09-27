@@ -3,8 +3,7 @@
 unset CC
 export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:/opt/happy/1.19.5/bin:/opt/alex/3.1.4/bin:~/tools/bin:$PATH
 if [ -f $HOME/.cabal/packages/hackage.haskell.org/00-index.tar.gz ]; then
-  zcat $HOME/.cabal/packages/hackage.haskell.org/00-index.tar.gz >
-       $HOME/.cabal/packages/hackage.haskell.org/00-index.tar;
+  gunzip $HOME/.cabal/packages/hackage.haskell.org/00-index.tar.gz
 fi
 travis_retry cabal update  
 
