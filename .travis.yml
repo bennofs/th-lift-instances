@@ -29,4 +29,6 @@ matrix:
     - env: GHCVER=head CABALVER=head
       compiler: ": #GHC head"
       addons: {apt: {packages: [cabal-install-head, ghc-head, alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
+  allow_failures:
+    - env: GHCVER=head CABALVER=head
   fast_finish: true
