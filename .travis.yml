@@ -1,19 +1,14 @@
 language: c
 sudo: false
-cache:
-  directories:
-    - $HOME/tools
 before_install:
  - unset CC
  - travis_retry cabal-$CABALVER update
  - export PATH=/opt/ghc/$GHCVER/bin:/opt/happy/1.19.5/bin:/opt/alex/3.1.4/bin:~/tools/bin:$PATH
- - travis/install-tools.sh
+ - test -z "$ROOT" || travis/install-tools.sh
 install:
  - cabal-$CABALVER install --only-dependencies --enable-tests --enable-benchmarks -j
 script:
  - travis/script.sh
- - test -z "$ROOT" || hlint --cpp-simple src
- - test -z "$ROOT" || packunused
 matrix:
   include:
     - env: GHCVER=7.6.3 CABALVER=1.18
@@ -25,4 +20,7 @@ matrix:
     - env: GHCVER=7.10.2 CABALVER=1.22 ROOT=1
       compiler: ": #GHC 7.10.2"
       addons: {apt: {packages: [cabal-install-1.22, ghc-7.10.2, alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
+      cache:
+        directories:
+          - $HOME/tools
   fast_finish: true
