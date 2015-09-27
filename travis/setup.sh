@@ -25,7 +25,7 @@ function step {
 function step_suppress {
   echo -ne "${green}$1 ... ${nc}"
   tmp=$(mktemp)
-  if ! bash /dev/stdin &> $tmp && rm -f $tmp && echo -e "${green}Done${nc}"; then
+  if ! ( bash /dev/stdin &> $tmp && echo -e "${green}Done${nc}" && rm -f $tmp ); then
     echo -e "${red}Failed${nc}"
     echo "Output: "
     cat $tmp
