@@ -41,6 +41,7 @@ fi
 if [ ! -z $ROOT ]; then
   step "Installing tools" << EOF
     if [ ! -d $HOME/tools/bin ]; then
+      rm -rf $HOME/tools
       mkdir -p $HOME/tools
       cd $HOME/tools
       echo $PWD:$HOME
