@@ -18,8 +18,9 @@ before_install:
      zcat $HOME/.cabal/packages/hackage.haskell.org/00-index.tar.gz >
           $HOME/.cabal/packages/hackage.haskell.org/00-index.tar;
    fi
- - travis_retry cabal update
- - sed -i 's/^jobs:.*$/jobs: 2/' $HOME/.cabal/config  # travis docker containers report incorrect number of cores
+ - travis_retry cabal update  
+# travis docker containers report incorrect number of cores
+ - "sed -i 's/^jobs:.*$/jobs: 2/' $HOME/.cabal/config"
 install:
  - test -z "$ROOT" || travis/install-tools.sh
  - travis/install-deps.sh
