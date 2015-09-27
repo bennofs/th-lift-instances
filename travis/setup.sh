@@ -8,4 +8,4 @@ fi
 travis_retry cabal update  
 
 # travis docker containers report incorrect number of cores
-"sed -i 's/^jobs:.*$/jobs: 2/' $HOME/.cabal/config"
+sed -i 's/^jobs:.*$/jobs: 2/' $HOME/.cabal/config
