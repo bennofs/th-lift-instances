@@ -4,7 +4,10 @@ begin_steps
 
 if [ -n "$ROOT" ]; then
   step "Checking style with HLint" << EOF
-    hlint --cpp-simple src tests
+    hlint --cpp-simple src
+    if [ -d tests ]; then
+      hlint --cpp-simple tests
+    fi
 EOF
 fi
 
@@ -27,7 +30,7 @@ EOF
 set +e
 if [ -n "$ROOT" ]; then
   step_suppress "Checking for unused dependencies" << EOF
-    packunused
+    packunused --ignore-package base
 EOF
 fi
 set -e
