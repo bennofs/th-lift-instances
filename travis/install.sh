@@ -39,17 +39,22 @@ EOF
 fi
 
 if [ ! -z $ROOT ]; then
-  step "Installing tools" << EOF
-    if [ ! -d $HOME/tools/bin ]; then
+  step "Computing tool versions" << EOF
+    cabal list --simple-output hlint | tail -n1 > toolversions.txt
+    cabal list --simple-output packunused | tail -n1 >> toolversions.txt
+    cat toolversions.txt
+EOF
+  if ! diff -u toolversions.txt $HOME/tools/toolversions.txt; then
+    step "Installing tools" << EOF
+      rm -rf $HOME/tools
       mkdir -p $HOME/tools
       cd $HOME/tools
       cabal sandbox init
       cabal install hlint packunused
       ln -s $HOME/tools/.cabal-sandbox/bin $HOME/tools/bin
-    else
-      echo "Tools already installed"
     fi
 EOF
+    cp toolversions.txt $HOME/tools
 fi
 
 end_steps
