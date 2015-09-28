@@ -52,9 +52,9 @@ EOF
       cabal sandbox init
       cabal install hlint packunused
       ln -s $HOME/tools/.cabal-sandbox/bin $HOME/tools/bin
-    fi
 EOF
     cp toolversions.txt $HOME/tools
+  fi
 fi
 
 end_steps
