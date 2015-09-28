@@ -23,7 +23,7 @@ matrix:
       compiler: ": #GHC 7.8.4"
       addons: {apt: {packages: [cabal-install-1.18, ghc-7.8.4, alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
     - env: GHCVER=7.10.2 CABALVER=1.22 ROOT=1
-      compiler: ": #GHC 7.10.2"
+      compiler: "ghc-7.10.2"
       addons: {apt: {packages: [cabal-install-1.22, ghc-7.10.2, alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
     - env: GHCVER=head CABALVER=head ALLOW_NEWER="template-haskell"
       compiler: ": #GHC head"
