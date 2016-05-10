@@ -1,10 +1,10 @@
 name: th-lift-instances
-version: 0.1.6
+version: 0.1.7
 cabal-version: >=1.10
 build-type: Custom
 license: BSD3
 license-file: LICENSE
-copyright: Copyright (C) 2013-2015 Benno Fünfstück
+copyright: Copyright (C) 2013-2016 Benno Fünfstück
 maintainer: Benno Fünfstück <benno.fuenfstueck@gmail.com>
 stability: experimental
 homepage: http://github.com/bennofs/th-lift-instances/
