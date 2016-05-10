@@ -45,7 +45,7 @@ test-suite tests
     type: exitcode-stdio-1.0
     main-is: Main.hs
     build-depends:
-        base <4.9,
+        base <4.10,
         template-haskell,
         containers >=0.4 && <0.6,
         vector >=0.9 && <0.12,
