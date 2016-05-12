@@ -1,19 +1,21 @@
-{-# OPTIONS_GHC -Wall #-}
+{-# OPTIONS_GHC -Wall -fno-warn-missing-signatures #-}
 module Main (main) where
 
 import Data.IORef
 import Data.List ( nub )
 import Data.Version ( showVersion )
-import Distribution.Package ( PackageName(PackageName), PackageId, InstalledPackageId, packageVersion, packageName )
-import Distribution.PackageDescription ( PackageDescription(), TestSuite(..), hsSourceDirs, libBuildInfo, buildInfo)
+import Distribution.Package ( PackageName(PackageName), packageVersion, packageName )
+import Distribution.PackageDescription ( PackageDescription(), TestSuite(..), hsSourceDirs, exeModules, libBuildInfo, buildInfo, libModules, modulePath, exeName)
 import Distribution.Simple ( defaultMainWithHooks, UserHooks(..), simpleUserHooks )
 import Distribution.Simple.BuildPaths ( autogenModulesDir )
-import Distribution.Simple.LocalBuildInfo ( withLibLBI, withTestLBI, withExeLBI, ComponentLocalBuildInfo(), LocalBuildInfo(), componentPackageDeps )
+import Distribution.Simple.LocalBuildInfo ( withLibLBI, withTestLBI, withExeLBI, LocalBuildInfo(), componentPackageDeps )
 import Distribution.Simple.Setup ( BuildFlags(buildVerbosity), fromFlag, buildDistPref, defaultDistPref, fromFlagOrDefault )
 import Distribution.Simple.Utils ( rewriteFile, createDirectoryIfMissingVerbose )
+import Distribution.Text (disp)
 import Distribution.Verbosity ( Verbosity )
 import System.Directory ( canonicalizePath )
-import System.FilePath ( (</>) )
+import System.FilePath ( (</>), dropExtension )
+import Text.PrettyPrint (render)
 
 main :: IO ()
 main = defaultMainWithHooks simpleUserHooks
@@ -40,12 +42,14 @@ generateBuildModule verbosity pkg lbi flags = do
     srcDirs <- mapM canonicalizePath $ hsSourceDirs $ testBuildInfo suite
     distDir <- canonicalizePath $ fromFlagOrDefault defaultDistPref $ buildDistPref flags
 
-    depsVar <- newIORef emptyDL
+    doctestVar <- newIORef emptyDL
     withLibLBI pkg lbi $ \lib liblbi ->
-      modifyIORef depsVar $ appendDL . singletonDL $ depsEntry (libBuildInfo lib) liblbi suitelbi
+      let mods = map (render . disp) $ libModules lib in
+      modifyIORef doctestVar $ appendDL . singletonDL $ doctestTarget "libary" mods (libBuildInfo lib) liblbi suitelbi
     withExeLBI pkg lbi $ \exe exelbi ->
-      modifyIORef depsVar $ appendDL . singletonDL $ depsEntry (buildInfo exe) exelbi suitelbi
-    deps <- fmap ($ []) $ readIORef depsVar
+      let mods = dropExtension (modulePath exe) : map (render . disp) (exeModules exe) in
+      modifyIORef doctestVar $ appendDL . singletonDL $ doctestTarget ("executable " ++ exeName exe) mods (buildInfo exe) exelbi suitelbi
+    doctestTargets <- fmap ($ []) $ readIORef doctestVar
 
     rewriteFile (dir </> "Build_" ++ map fixchar (testName suite) ++ ".hs") $ unlines
       [ "module Build_" ++ map fixchar (testName suite) ++ " where"
@@ -53,17 +57,15 @@ generateBuildModule verbosity pkg lbi flags = do
       , "getDistDir = " ++ show distDir
       , "getSrcDirs :: [FilePath]"
       , "getSrcDirs = " ++ show srcDirs
-      , "deps :: [([FilePath], [String])]"
-      , "deps = " ++ show deps
+      , "doctestTargets :: [(String, [String], [FilePath], [String])]"
+      , "doctestTargets = " ++ show doctestTargets
       ]
 
   where
     formatdeps = map (formatone . snd)
     formatone p = case packageName p of
       PackageName n -> n ++ "-" ++ showVersion (packageVersion p)
-    depsEntry targetbi targetlbi suitelbi = (hsSourceDirs targetbi, formatdeps $ testDeps targetlbi suitelbi)
+    doctestTarget name mods targetbi targetlbi suitelbi = (name, mods, hsSourceDirs targetbi, formatdeps $ testDeps targetlbi suitelbi)
     fixchar '-' = '_'
     fixchar c = c
-
-testDeps :: ComponentLocalBuildInfo -> ComponentLocalBuildInfo -> [(InstalledPackageId, PackageId)]
 testDeps xs ys = nub $ componentPackageDeps xs ++ componentPackageDeps ys
