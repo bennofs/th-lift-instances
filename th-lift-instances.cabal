@@ -1,7 +1,7 @@
 name: th-lift-instances
 version: 0.1.7
 cabal-version: >=1.10
-build-type: Custom
+build-type: Simple
 license: BSD3
 license-file: LICENSE
 copyright: Copyright (C) 2013-2016 Benno Fünfstück
