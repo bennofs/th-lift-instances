@@ -44,16 +44,50 @@ step "Creating source distribution" << EOF
   cabal sdist # tests that a source-distribution can be generated
 EOF
 
-step_suppress "Checking source distribution" << 'EOF'
+pkgid=$(cabal info . | awk '{print $2; exit}')
+
+step_suppress "Checking source distribution" << EOF
   # The following scriptlet checks that the resulting source distribution can be built & installed
-  SRC_TGZ=$(cabal info . | awk '{print $2 ".tar.gz";exit}')
-  cd dist/
-  if [ -f "$SRC_TGZ" ]; then
-    cabal install --enable-tests --enable-benchmarks "$SRC_TGZ"
+  SRC_TGZ="dist/$pkgid.tar.gz"
+  if [ -f "\$SRC_TGZ" ]; then
+    cabal install --enable-tests --enable-benchmarks "\$SRC_TGZ"
   else
-    echo "expected '$SRC_TGZ' not found"
+    echo "expected '\$SRC_TGZ' not found"
     exit 1
   fi    
 EOF
+
+if [ -n "$ROOT" -a -n "$HACKAGE_AUTH" ]; then
+  step "Uploading package candidate" << EOF
+    curl https://hackage.haskell.org/packages/candidates \
+      -H 'Accept: text/plain' \
+      -u '$HACKAGE_AUTH' -F 'package=@dist/$pkgid.tar.gz'
+EOF
+fi
+
+if [ -n "$ROOT" ]; then
+  step "Generating package documentation" << EOF
+    HYPERLINK_FLAG="--hyperlink-source"
+    if hadddock --hyperlinked-source &> /dev/null; then
+      HYPERLINK_FLAG="--haddock-option='--hyperlinked-source'"
+    fi
+    cabal haddock \
+      --html --html-location='/package/\$pkg-\$version/docs'\
+      --contents-location='/package/\$pkg-\$version'\
+      \$HYPERLINK_FLAG \
+      --hoogle
+    cp -R dist/doc/html/* $pkgid-docs
+    tar cvz --format ustar $pkgid-docs -f $pkgid-docs.tar.gz
+    rm -r $pkgid-docs
+EOF
+fi
+
+if [ -n "$ROOT" -a -n "$HACKAGE_AUTH" ]; then
+  step "Uploading package documentation to hackage" << EOF
+    curl -X PUT 'https://hackage.haskell.org/package/$pkgid/candidate/docs' \
+      -H 'Content-Type: application/x-tar' -H 'Content-Encoding: gzip' \
+      -u '$HACKAGE_AUTH' --data-binary '@$pkgid-docs.tar.gz'
+EOF
+fi
 
 end_steps

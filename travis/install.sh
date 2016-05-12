@@ -39,9 +39,13 @@ EOF
 fi
 
 if [ ! -z $ROOT ]; then
+  TOOLS="hlint packunused haddock"
+
   step "Computing tool versions" << EOF
-    cabal list --simple-output hlint | tail -n1 > toolversions.txt
-    cabal list --simple-output packunused | tail -n1 >> toolversions.txt
+    touch toolversions.txt
+    for tool in $TOOLS; do
+      cabal list --simple-output \$tool | grep "^\$tool " | tail -n1 >> toolversions.txt
+    done
     cat toolversions.txt
 EOF
   if ! diff -u toolversions.txt $HOME/tools/toolversions.txt; then
@@ -50,8 +54,9 @@ EOF
       mkdir -p $HOME/tools
       cd $HOME/tools
       cabal sandbox init
-      cabal install hlint packunused
+      cabal install $TOOLS
       ln -s $HOME/tools/.cabal-sandbox/bin $HOME/tools/bin
+      rm -f $HOME/tools/bin/{happy,ghc,alex,cabal}
 EOF
     cp toolversions.txt $HOME/tools
   fi

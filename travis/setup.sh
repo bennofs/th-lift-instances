@@ -38,7 +38,7 @@ function step_suppress {
 export -f step step_suppress begin_steps end_steps
 
 unset CC
-export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:/opt/happy/1.19.5/bin:/opt/alex/3.1.4/bin:$HOME/tools/bin:$PATH
+export PATH=$HOME/tools/bin:/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:/opt/happy/1.19.5/bin:/opt/alex/3.1.4/bin:$PATH
 if [ -f $HOME/.cabal/packages/hackage.haskell.org/00-index.tar.gz ]; then
   gunzip $HOME/.cabal/packages/hackage.haskell.org/00-index.tar.gz
 fi
