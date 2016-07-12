@@ -57,14 +57,6 @@ step_suppress "Checking source distribution" << EOF
   fi    
 EOF
 
-if [ -n "$ROOT" -a -n "$HACKAGE_AUTH" ]; then
-  step "Uploading package candidate" << EOF
-    curl https://hackage.haskell.org/packages/candidates \
-      -H 'Accept: text/plain' \
-      -u '$HACKAGE_AUTH' -F 'package=@dist/$pkgid.tar.gz'
-EOF
-fi
-
 if [ -n "$ROOT" ]; then
   step "Generating package documentation" << EOF
     HYPERLINK_FLAG="--hyperlink-source"
@@ -83,8 +75,28 @@ EOF
 fi
 
 if [ -n "$ROOT" -a -n "$HACKAGE_AUTH" ]; then
+  if [ -n "$TRAVIS_TAG" ]; then
+    step "Uploading package" << EOF
+      curl https://hackage.haskell.org/packages \
+        -H 'Accept: text/plain' \
+        -u '$HACKAGE_AUTH' -F 'package=@dist/$pkgid.tar.gz'
+EOF
+  else
+    step "Uploading package candidate" << EOF
+      curl https://hackage.haskell.org/packages/candidates \
+        -H 'Accept: text/plain' \
+        -u '$HACKAGE_AUTH' -F 'package=@dist/$pkgid.tar.gz'
+EOF
+  fi
+fi
+
+if [ -n "$ROOT" -a -n "$HACKAGE_AUTH" ]; then
+  URL="https://hackage.haskell.org/package/$pkgid/candidate/docs"
+  if [ -n "$TRAVIS_TAG" ]; then
+    URL="https://hackage.haskell.org/package/$pkgid/docs"
+  fi
   step "Uploading package documentation to hackage" << EOF
-    curl -X PUT 'https://hackage.haskell.org/package/$pkgid/candidate/docs' \
+    curl -X PUT '$URL' \
       -H 'Content-Type: application/x-tar' -H 'Content-Encoding: gzip' \
       -u '$HACKAGE_AUTH' --data-binary '@$pkgid-docs.tar.gz'
 EOF
