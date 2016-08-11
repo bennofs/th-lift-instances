@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# LANGUAGE TemplateHaskell, CPP #-}
+{-# LANGUAGE TemplateHaskell, CPP, StandaloneDeriving, FlexibleInstances, GeneralizedNewtypeDeriving, FlexibleContexts #-}
 module Instances.TH.Lift
   ( -- | This module provides orphan instances for the 'Language.Haskell.TH.Syntax.Lift' class from template-haskell. Following is a list of the provided instances.
     --
@@ -46,16 +46,19 @@ module Instances.TH.Lift
 
   ) where
 
+import Instances.TH.Lift.Internal
 import Language.Haskell.TH.Lift (deriveLift)
-import Language.Haskell.TH.Syntax (Lift(..))
-
-import qualified Data.Foldable as F
 
 -- Base
-#if !MIN_VERSION_template_haskell(2,9,1)
-import Language.Haskell.TH
+import Data.Complex
+import qualified Data.Foldable as F
 import Data.Int
 import Data.Word
+import Language.Haskell.TH.Syntax (Lift(..))
+
+#if !MIN_VERSION_template_haskell(2,9,1)
+import Data.Ratio
+import Language.Haskell.TH
 #endif
 
 -- Containers
@@ -68,46 +71,58 @@ import qualified Data.Tree as Tree
 
 -- Text
 import qualified Data.Text as Text
+import qualified Data.Text.Array as Text
 import qualified Data.Text.Lazy as Text.Lazy
 
 -- ByteString
 import qualified Data.ByteString as ByteString
 import qualified Data.ByteString.Lazy as ByteString.Lazy
 
+-- ByteArray
+import Data.Primitive.ByteArray (ByteArray)
+
 -- Vector
 import qualified Data.Vector as Vector.Boxed
 import qualified Data.Vector.Primitive as Vector.Primitive
 import qualified Data.Vector.Storable as Vector.Storable
-import qualified Data.Vector.Unboxed as Vector.Unboxed
+import qualified Data.Vector.Unboxed as UV
+import qualified Data.Vector.Unboxed.Base as UV
+
 --------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------
 #if !MIN_VERSION_template_haskell(2,9,1)
 -- Base
 
-instance Lift Word8 where
-  lift x = [| fromInteger $(lift $ toInteger x) :: Word8 |]
-
-instance Lift Word16 where
-  lift x = [| fromInteger $(lift $ toInteger x) :: Word16 |]
-
-instance Lift Word32 where
-  lift x = [| fromInteger $(lift $ toInteger x) :: Word32 |]
-
-instance Lift Word64 where
-  lift x = [| fromInteger $(lift $ toInteger x) :: Word64 |]
-
 instance Lift Int8 where
-  lift x = [| fromInteger $(lift $ toInteger x) :: Int8 |]
+  lift x = return (LitE (IntegerL (fromIntegral x)))
 
 instance Lift Int16 where
-  lift x = [| fromInteger $(lift $ toInteger x) :: Int16 |]
+  lift x = return (LitE (IntegerL (fromIntegral x)))
 
 instance Lift Int32 where
-  lift x = [| fromInteger $(lift $ toInteger x) :: Int32 |]
+  lift x = return (LitE (IntegerL (fromIntegral x)))
 
 instance Lift Int64 where
-  lift x = [| fromInteger $(lift $ toInteger x) :: Int64 |]
+  lift x = return (LitE (IntegerL (fromIntegral x)))
+
+instance Lift Word where
+  lift x = return (LitE (IntegerL (fromIntegral x)))
+
+instance Lift Word8 where
+  lift x = return (LitE (IntegerL (fromIntegral x)))
+
+instance Lift Word16 where
+  lift x = return (LitE (IntegerL (fromIntegral x)))
+
+instance Lift Word32 where
+  lift x = return (LitE (IntegerL (fromIntegral x)))
+
+instance Lift Word64 where
+  lift x = return (LitE (IntegerL (fromIntegral x)))
+
+instance Integral a => Lift (Ratio a) where
+  lift x = return (LitE (RationalL (toRational x)))
 
 instance Lift Float where
   lift x = [| $(litE $ rationalL $ toRational x) :: Float |]
@@ -138,30 +153,70 @@ deriveLift ''Tree.Tree
 
 --------------------------------------------------------------------------------
 -- Text
-instance Lift Text.Text where
-  lift t = [| Text.pack $(lift $ Text.unpack t) |]
+instance Lift Text.Text where lift = liftText
 
 instance Lift Text.Lazy.Text where
-  lift t = [| Text.Lazy.pack $(lift $ Text.Lazy.unpack t) |]
+  lift lt = [| Text.Lazy.fromStrict $(lift (Text.Lazy.toStrict lt)) |]
+
+instance Lift Text.Array where lift = liftTextArray
+
+--------------------------------------------------------------------------------
+-- ByteArray
+
+instance Lift ByteArray where lift = liftByteArray
 
 --------------------------------------------------------------------------------
 -- ByteString
-instance Lift ByteString.ByteString where
-  lift b = [| ByteString.pack $(lift $ ByteString.unpack b) |]
+instance Lift ByteString.ByteString where lift = liftByteString
 
 instance Lift ByteString.Lazy.ByteString where
-  lift b = [| ByteString.Lazy.pack $(lift $ ByteString.Lazy.unpack b) |]
+  lift b = [| ByteString.Lazy.fromStrict $(lift (ByteString.Lazy.toStrict b)) |]
 
 --------------------------------------------------------------------------------
 -- Vector
-instance (Vector.Primitive.Prim a, Lift a) => Lift (Vector.Primitive.Vector a) where
-  lift v = [| Vector.Primitive.fromList $(lift $ Vector.Primitive.toList v) |]
+instance Vector.Primitive.Prim a => Lift (Vector.Primitive.Vector a) where
+  lift = liftPrimitiveVector
 
-instance (Vector.Storable.Storable a, Lift a) => Lift (Vector.Storable.Vector a) where
-  lift v = [| Vector.Storable.fromList $(lift $ Vector.Storable.toList v) |]
+instance Vector.Storable.Storable a => Lift (Vector.Storable.Vector a) where
+  lift = liftStorableVector
 
-instance (Vector.Unboxed.Unbox a, Lift a) => Lift (Vector.Unboxed.Vector a) where
-  lift v = [| Vector.Unboxed.fromList $(lift $ Vector.Unboxed.toList v) |]
+instance Lift (UV.Vector Bool)   where lift (UV.V_Bool   v) = [| UV.V_Bool   v |]
+instance Lift (UV.Vector Char)   where lift (UV.V_Char   v) = [| UV.V_Char   v |]
+instance Lift (UV.Vector Double) where lift (UV.V_Double v) = [| UV.V_Double v |]
+instance Lift (UV.Vector Float)  where lift (UV.V_Float  v) = [| UV.V_Float  v |]
+instance Lift (UV.Vector Int)    where lift (UV.V_Int    v) = [| UV.V_Int    v |]
+instance Lift (UV.Vector Int8)   where lift (UV.V_Int8   v) = [| UV.V_Int8   v |]
+instance Lift (UV.Vector Int16)  where lift (UV.V_Int16  v) = [| UV.V_Int16  v |]
+instance Lift (UV.Vector Int32)  where lift (UV.V_Int32  v) = [| UV.V_Int32  v |]
+instance Lift (UV.Vector Int64)  where lift (UV.V_Int64  v) = [| UV.V_Int64  v |]
+instance Lift (UV.Vector Word)   where lift (UV.V_Word   v) = [| UV.V_Word   v |]
+instance Lift (UV.Vector Word8)  where lift (UV.V_Word8  v) = [| UV.V_Word8  v |]
+instance Lift (UV.Vector Word16) where lift (UV.V_Word16 v) = [| UV.V_Word16 v |]
+instance Lift (UV.Vector Word32) where lift (UV.V_Word32 v) = [| UV.V_Word32 v |]
+instance Lift (UV.Vector ())     where lift (UV.V_Unit   v) = [| UV.V_Unit   v |]
+
+instance Lift (UV.Vector a) => Lift (UV.Vector (Complex a)) where
+  lift (UV.V_Complex v) = [| UV.V_Complex v |]
+
+instance (Lift (UV.Vector a), Lift (UV.Vector b))
+  => Lift (UV.Vector (a, b)) where
+  lift (UV.V_2 l a b) = [| UV.V_2 l a b |]
+
+instance (Lift (UV.Vector a), Lift (UV.Vector b), Lift (UV.Vector c))
+  => Lift (UV.Vector (a, b, c)) where
+  lift (UV.V_3 l a b c) = [| UV.V_3 l a b c |]
+
+instance (Lift (UV.Vector a), Lift (UV.Vector b), Lift (UV.Vector c), Lift (UV.Vector d))
+  => Lift (UV.Vector (a, b, c, d)) where
+  lift (UV.V_4 l a b c d) = [| UV.V_4 l a b c d |]
+
+instance (Lift (UV.Vector a), Lift (UV.Vector b), Lift (UV.Vector c), Lift (UV.Vector d), Lift (UV.Vector e))
+  => Lift (UV.Vector (a, b, c, d, e)) where
+  lift (UV.V_5 l a b c d e) = [| UV.V_5 l a b c d e |]
+
+instance (Lift (UV.Vector a), Lift (UV.Vector b), Lift (UV.Vector c), Lift (UV.Vector d), Lift (UV.Vector e), Lift (UV.Vector f))
+  => Lift (UV.Vector (a, b, c, d, e, f)) where
+  lift (UV.V_6 l a b c d e f) = [| UV.V_6 l a b c d e f |]
 
 instance Lift a => Lift (Vector.Boxed.Vector a) where
   lift v = [| Vector.Boxed.fromList $(lift $ Vector.Boxed.toList v) |]
