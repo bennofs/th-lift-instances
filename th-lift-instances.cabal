@@ -29,7 +29,7 @@ library
     exposed-modules:
         Instances.TH.Lift
     build-depends:
-        base >=4.3,
+        base >=4.3 && <5,
         template-haskell,
         th-lift,
         containers,
@@ -45,7 +45,7 @@ test-suite tests
     type: exitcode-stdio-1.0
     main-is: Main.hs
     build-depends:
-        base,
+        base <5,
         template-haskell,
         containers,
         vector,
