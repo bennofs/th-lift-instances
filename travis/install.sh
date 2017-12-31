@@ -7,12 +7,16 @@ begin_steps
 # We will first compute cabal's install plan. If it matches the install plan in the cache,
 # we can reuse the cache. Otherwise, we will throw away the cache to avoid interfering with
 # cabal's solver.
+CABAL_FULL_VERSION=$(cabal --version | grep -P -o 'using version \K[^ ]+')
 step "Computing install plan" << EOF
   cabal install --dry -v --only-dependencies --enable-tests --enable-benchmarks ${ALLOW_NEWER:+--allow-newer="$ALLOW_NEWER"} > installplan.txt
 
   # -v prints things some things we are not interested in, like commands containing random temporary path.
   # The install plan starts after the line "Resolving dependencies...", so we will just delete everything up to that.
   sed -i -e '1,/^Resolving dependencies/d' installplan.txt
+
+  # We need to install a Cabal library that matches the version cabal-install was compiled against
+  echo "Cabal $CABAL_FULL_VERSION" >> installplan.txt
 
   # Print out the install plan for debugging purposes
   cat installplan.txt
@@ -29,7 +33,7 @@ else
     rm -rf $HOME/.cabsnap
     mkdir -p $HOME/.ghc $HOME/.cabal/lib $HOME/.cabal/share $HOME/.cabal/bin
     cabal install --only-dependencies --enable-tests --enable-benchmarks ${ALLOW_NEWER:+--allow-newer="$ALLOW_NEWER"}
-    if [ "$GHCVER" = "7.10.1" ]; then cabal install Cabal-1.22.4.0; fi
+    cabal install Cabal --constraint "Cabal==$CABAL_FULL_VERSION"
 EOF
   step "Saving build cache" << EOF
     mkdir $HOME/.cabsnap
@@ -42,20 +46,19 @@ if [ ! -z $ROOT ]; then
   TOOLS="hlint packunused haddock"
 
   step "Computing tool versions" << EOF
-    touch toolversions.txt
+    echo "Cabal $CABAL_FULL_VERSION" > toolversions.txt
     for tool in $TOOLS; do
       cabal list --simple-output \$tool | grep "^\$tool " | tail -n1 >> toolversions.txt
     done
     cat toolversions.txt
 EOF
   if ! diff -u toolversions.txt $HOME/tools/toolversions.txt; then
-    CABAL_FULL_VERSION=$(ghc-pkg latest Cabal)
     step "Installing tools" << EOF
       rm -rf $HOME/tools
       mkdir -p $HOME/tools
       cd $HOME/tools
       cabal sandbox init
-      cabal install $TOOLS --constraint "Cabal==${CABAL_FULL_VERSION##*-}"
+      cabal install $TOOLS --constraint "Cabal==$CABAL_FULL_VERSION"
       ln -s $HOME/tools/.cabal-sandbox/bin $HOME/tools/bin
       rm -f $HOME/tools/bin/{happy,ghc,alex,cabal}
 EOF
