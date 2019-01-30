@@ -21,6 +21,8 @@ module Instances.TH.Lift
     -- |  * 'Word8', 'Word16', 'Word32', 'Word64'
     --
     --    * 'Int8', 'Int16', 'Int32', 'Int64'
+    --
+    --    * 'NonEmpty' and 'Void', until provided by @template-haskell-2.15@
 
     -- * Containers (both strict/lazy)
     -- |  * 'Data.IntMap.IntMap'
@@ -79,6 +81,16 @@ import qualified Data.Vector as Vector.Boxed
 import qualified Data.Vector.Primitive as Vector.Primitive
 import qualified Data.Vector.Storable as Vector.Storable
 import qualified Data.Vector.Unboxed as Vector.Unboxed
+
+#if !MIN_VERSION_template_haskell(2,15,0)
+#if MIN_VERSION_base(4,8,0)
+import Data.Void (Void, absurd)
+#endif
+#if MIN_VERSION_base(4,9,0)
+import Data.List.NonEmpty (NonEmpty (..))
+#endif
+#endif
+
 --------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------
@@ -116,6 +128,19 @@ instance Lift Double where
   lift x = [| $(litE $ rationalL $ toRational x) :: Double |]
 
 # endif
+
+#if !MIN_VERSION_template_haskell(2,15,0)
+#if MIN_VERSION_base(4,8,0)
+
+instance Lift Void where
+    lift = absurd
+
+#endif
+#if MIN_VERSION_base(4,9,0)
+instance Lift a => Lift (NonEmpty a) where
+    lift (x :| xs) = [| x :| xs |]
+#endif
+#endif
 
 --------------------------------------------------------------------------------
 -- Containers
