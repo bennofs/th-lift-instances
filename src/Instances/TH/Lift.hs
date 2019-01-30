@@ -48,7 +48,6 @@ module Instances.TH.Lift
 
   ) where
 
-import Language.Haskell.TH.Lift (deriveLift)
 import Language.Haskell.TH.Syntax (Lift(..))
 
 import qualified Data.Foldable as F
@@ -159,7 +158,8 @@ instance Lift a => Lift (Sequence.Seq a) where
 instance Lift a => Lift (Set.Set a) where
   lift s = [| Set.fromList $(lift $ Set.toList s) |]
 
-deriveLift ''Tree.Tree
+instance Lift a => Lift (Tree.Tree a) where
+  lift (Tree.Node x xs) = [| Tree.Node x xs |]
 
 --------------------------------------------------------------------------------
 -- Text
