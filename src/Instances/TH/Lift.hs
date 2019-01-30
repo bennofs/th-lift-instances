@@ -1,5 +1,10 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# LANGUAGE TemplateHaskell, CPP #-}
+{-# LANGUAGE CPP #-}
+#if __GLASGOW_HASKELL__ >= 800
+{-# LANGUAGE TemplateHaskellQuotes #-}
+#else
+{-# LANGUAGE TemplateHaskell #-}
+#endif
 module Instances.TH.Lift
   ( -- | This module provides orphan instances for the 'Language.Haskell.TH.Syntax.Lift' class from template-haskell. Following is a list of the provided instances.
     --
@@ -59,6 +64,19 @@ import Data.Int
 import Data.Word
 #endif
 
+#if !MIN_VERSION_template_haskell(2,10,0)
+import Data.Ratio (Ratio)
+#endif
+
+#if !MIN_VERSION_template_haskell(2,15,0)
+#if MIN_VERSION_base(4,8,0)
+import Data.Void (Void, absurd)
+#endif
+#if MIN_VERSION_base(4,9,0)
+import Data.List.NonEmpty (NonEmpty (..))
+#endif
+#endif
+
 -- Containers
 import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
@@ -81,14 +99,6 @@ import qualified Data.Vector.Primitive as Vector.Primitive
 import qualified Data.Vector.Storable as Vector.Storable
 import qualified Data.Vector.Unboxed as Vector.Unboxed
 
-#if !MIN_VERSION_template_haskell(2,15,0)
-#if MIN_VERSION_base(4,8,0)
-import Data.Void (Void, absurd)
-#endif
-#if MIN_VERSION_base(4,9,0)
-import Data.List.NonEmpty (NonEmpty (..))
-#endif
-#endif
 
 --------------------------------------------------------------------------------
 
@@ -97,36 +107,51 @@ import Data.List.NonEmpty (NonEmpty (..))
 -- Base
 
 instance Lift Word8 where
-  lift x = [| fromInteger $(lift $ toInteger x) :: Word8 |]
+  lift x = [| fromInteger x' :: Word8 |] where
+    x' = toInteger x
 
 instance Lift Word16 where
-  lift x = [| fromInteger $(lift $ toInteger x) :: Word16 |]
+  lift x = [| fromInteger x' :: Word16 |] where
+    x' = toInteger x
 
 instance Lift Word32 where
-  lift x = [| fromInteger $(lift $ toInteger x) :: Word32 |]
+  lift x = [| fromInteger x' :: Word32 |] where
+    x' = toInteger x
 
 instance Lift Word64 where
-  lift x = [| fromInteger $(lift $ toInteger x) :: Word64 |]
+  lift x = [| fromInteger x' :: Word64 |] where
+    x' = toInteger x
 
 instance Lift Int8 where
-  lift x = [| fromInteger $(lift $ toInteger x) :: Int8 |]
+  lift x = [| fromInteger x' :: Int8 |] where
+    x' = toInteger x
 
 instance Lift Int16 where
-  lift x = [| fromInteger $(lift $ toInteger x) :: Int16 |]
+  lift x = [| fromInteger x' :: Int16 |] where
+    x' = toInteger x
 
 instance Lift Int32 where
-  lift x = [| fromInteger $(lift $ toInteger x) :: Int32 |]
+  lift x = [| fromInteger x' :: Int32 |] where
+    x' = toInteger x
 
 instance Lift Int64 where
-  lift x = [| fromInteger $(lift $ toInteger x) :: Int64 |]
+  lift x = [| fromInteger x' :: Int64 |] where
+    x' = toInteger x
 
 instance Lift Float where
-  lift x = [| $(litE $ rationalL $ toRational x) :: Float |]
+  lift x = return (LitE (RationalL (toRational x)))
 
 instance Lift Double where
-  lift x = [| $(litE $ rationalL $ toRational x) :: Double |]
-
+  lift x = return (LitE (RationalL (toRational x)))
 # endif
+
+#if !MIN_VERSION_template_haskell(2,10,0)
+instance Lift () where
+  lift () = [| () |]
+
+instance Integral a => Lift (Ratio a) where
+  lift x = return (LitE (RationalL (toRational x)))
+#endif
 
 #if !MIN_VERSION_template_haskell(2,15,0)
 #if MIN_VERSION_base(4,8,0)
@@ -144,19 +169,24 @@ instance Lift a => Lift (NonEmpty a) where
 --------------------------------------------------------------------------------
 -- Containers
 instance Lift v => Lift (IntMap.IntMap v) where
-  lift m = [| IntMap.fromList $(lift $ IntMap.toList m) |]
+  lift m = [| IntMap.fromList m' |] where
+    m' = IntMap.toList m
 
 instance Lift IntSet.IntSet where
-  lift s = [| IntSet.fromList $(lift $ IntSet.toList s) |]
+  lift s = [| IntSet.fromList s' |] where
+    s' = IntSet.toList s
 
 instance (Lift k, Lift v) => Lift (Map.Map k v) where
-  lift m = [| Map.fromList $(lift $ Map.toList m) |]
+  lift m = [| Map.fromList m' |] where
+    m' = Map.toList m
 
 instance Lift a => Lift (Sequence.Seq a) where
-  lift s = [| Sequence.fromList $(lift $ F.toList s) |]
+  lift s = [| Sequence.fromList s' |] where
+    s' = F.toList s
 
 instance Lift a => Lift (Set.Set a) where
-  lift s = [| Set.fromList $(lift $ Set.toList s) |]
+  lift s = [| Set.fromList s' |] where
+    s' = Set.toList s
 
 instance Lift a => Lift (Tree.Tree a) where
   lift (Tree.Node x xs) = [| Tree.Node x xs |]
@@ -164,29 +194,37 @@ instance Lift a => Lift (Tree.Tree a) where
 --------------------------------------------------------------------------------
 -- Text
 instance Lift Text.Text where
-  lift t = [| Text.pack $(lift $ Text.unpack t) |]
+  lift t = [| Text.pack t' |] where
+    t' = Text.unpack t
 
 instance Lift Text.Lazy.Text where
-  lift t = [| Text.Lazy.pack $(lift $ Text.Lazy.unpack t) |]
+  lift t = [| Text.Lazy.pack t' |] where
+    t' = Text.Lazy.unpack t
 
 --------------------------------------------------------------------------------
 -- ByteString
 instance Lift ByteString.ByteString where
-  lift b = [| ByteString.pack $(lift $ ByteString.unpack b) |]
+  lift b = [| ByteString.pack b' |] where
+    b' = ByteString.unpack b
 
 instance Lift ByteString.Lazy.ByteString where
-  lift b = [| ByteString.Lazy.pack $(lift $ ByteString.Lazy.unpack b) |]
+  lift b = [| ByteString.Lazy.pack b' |] where
+    b' = ByteString.Lazy.unpack b
 
 --------------------------------------------------------------------------------
 -- Vector
 instance (Vector.Primitive.Prim a, Lift a) => Lift (Vector.Primitive.Vector a) where
-  lift v = [| Vector.Primitive.fromList $(lift $ Vector.Primitive.toList v) |]
+  lift v = [| Vector.Primitive.fromList v' |] where
+    v' = Vector.Primitive.toList v
 
 instance (Vector.Storable.Storable a, Lift a) => Lift (Vector.Storable.Vector a) where
-  lift v = [| Vector.Storable.fromList $(lift $ Vector.Storable.toList v) |]
+  lift v = [| Vector.Storable.fromList v' |] where
+    v' = Vector.Storable.toList v
 
 instance (Vector.Unboxed.Unbox a, Lift a) => Lift (Vector.Unboxed.Vector a) where
-  lift v = [| Vector.Unboxed.fromList $(lift $ Vector.Unboxed.toList v) |]
+  lift v = [| Vector.Unboxed.fromList v' |] where
+    v' = Vector.Unboxed.toList v
 
 instance Lift a => Lift (Vector.Boxed.Vector a) where
-  lift v = [| Vector.Boxed.fromList $(lift $ Vector.Boxed.toList v) |]
+  lift v = [| Vector.Boxed.fromList v' |] where
+    v' = Vector.Boxed.toList v
