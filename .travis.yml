@@ -13,33 +13,39 @@ install: travis/install.sh
 script: travis/script.sh
 matrix:
   include:
-    - env: GHCVER=7.0.4 CABALVER=1.16
-      compiler: ": #GHC 7.0.4"
-      addons: {apt: {packages: [cabal-install-1.16, ghc-7.0.4, alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
-    - env: GHCVER=7.2.2 CABALVER=1.16
-      compiler: ": #GHC 7.2.2"
-      addons: {apt: {packages: [cabal-install-1.16, ghc-7.2.2, alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
-    - env: GHCVER=7.4.2 CABALVER=1.16
-      compiler: ": #GHC 7.4.2"
-      addons: {apt: {packages: [cabal-install-1.16, ghc-7.4.2, alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
-    - env: GHCVER=7.6.3 CABALVER=1.18
-      compiler: ": #GHC 7.6.3"
-      addons: {apt: {packages: [cabal-install-1.18, ghc-7.6.3, alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
-    - env: GHCVER=7.8.4 CABALVER=1.18
-      compiler: ": #GHC 7.8.4"
-      addons: {apt: {packages: [cabal-install-1.18, ghc-7.8.4, alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
-    - env: GHCVER=7.10.3 CABALVER=1.22
-      compiler: ": #GHC 7.10.3"
-      addons: {apt: {packages: [cabal-install-1.22, ghc-7.10.3, alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
+    - env: GHCVER=7.0.4 CABALVER=1.18
+      compiler: ghc-7.0.4
+      addons: {apt: {packages: [cabal-install-1.18, ghc-7.0.4, alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
+    - env: GHCVER=7.2.2 CABALVER=1.18
+      compiler: ghc-7.2.2
+      addons: {apt: {packages: [cabal-install-1.18, ghc-7.2.2, alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
+    - env: GHCVER=7.4.2 CABALVER=1.24
+      compiler: ghc-7.4.2
+      addons: {apt: {packages: [cabal-install-1.24, ghc-7.4.2, alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
+    - env: GHCVER=7.6.3 CABALVER=1.24
+      compiler: ghc-7.6.3
+      addons: {apt: {packages: [cabal-install-1.24, ghc-7.6.3, alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
+    - env: GHCVER=7.8.4 CABALVER=1.24
+      compiler: ghc-7.8.4
+      addons: {apt: {packages: [cabal-install-1.24, ghc-7.8.4, alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
+    - env: GHCVER=7.10.3 CABALVER=1.24
+      compiler: ghc-7.10.3
+      addons: {apt: {packages: [cabal-install-1.24, ghc-7.10.3, alex-3.1.4, happy-1.19.5], sources: [hvr-ghc]}}
     - env: GHCVER=8.0.1 CABALVER=1.24 ROOT=1
-      compiler: ": #GHC 8.0.1"
+      compiler: ghc-8.0.1
       addons: {apt: {packages: [cabal-install-1.24, ghc-8.0.1, alex-3.1.7, happy-1.19.5], sources: [hvr-ghc]}}
     - env: GHCVER=8.2.2 CABALVER=2.0
-      compiler: ": #GHC 8.2.2"
+      compiler: ghc-8.2.2
       addons: {apt: {packages: [cabal-install-2.0, ghc-8.2.2, alex-3.1.7, happy-1.19.5], sources: [hvr-ghc]}}
+    - env: GHCVER=8.4.4 CABALVER=2.2
+      compiler: ghc-8.4.4
+      addons: {apt: {packages: [cabal-install-2.2, ghc-8.4.4, alex-3.1.7, happy-1.19.5], sources: [hvr-ghc]}}
+    - env: GHCVER=8.6.3 CABALVER=2.4
+      compiler: ghc-8.6.3
+      addons: {apt: {packages: [cabal-install-2.4, ghc-8.6.3, alex-3.1.7, happy-1.19.5], sources: [hvr-ghc]}}
     - env: GHCVER=head CABALVER=head ALLOW_NEWER="template-haskell"
-      compiler: ": #GHC head"
+      compiler: ghc-head
       addons: {apt: {packages: [cabal-install-head, ghc-head, alex-3.1.7, happy-1.19.5], sources: [hvr-ghc]}}
   allow_failures:
-    - compiler: ": #GHC head"
+    - compiler: ghc-head
   fast_finish: true

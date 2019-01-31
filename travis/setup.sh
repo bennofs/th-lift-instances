@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+unset CC
+
 set -e
 
 export green='\e[0;32m'

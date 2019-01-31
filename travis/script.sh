@@ -41,8 +41,14 @@ step "Running tests" << EOF
   cabal test
 EOF
 
+
+if [ -n "$ROOT" ]; then
+  step "Creating check" << EOF
+    cabal check
+EOF
+fi
+
 step "Creating source distribution" << EOF
-  cabal check
   cabal sdist # tests that a source-distribution can be generated
 EOF
 
