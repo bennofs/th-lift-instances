@@ -54,12 +54,12 @@ module Instances.TH.Lift
   ) where
 
 import Language.Haskell.TH.Syntax (Lift(..))
+import Language.Haskell.TH
 
 import qualified Data.Foldable as F
 
 -- Base
 #if !MIN_VERSION_template_haskell(2,9,1)
-import Language.Haskell.TH
 import Data.Int
 import Data.Word
 #endif
@@ -91,7 +91,12 @@ import qualified Data.Text.Lazy as Text.Lazy
 
 -- ByteString
 import qualified Data.ByteString as ByteString
+import qualified Data.ByteString.Unsafe as ByteString.Unsafe
 import qualified Data.ByteString.Lazy as ByteString.Lazy
+import           System.IO.Unsafe (unsafePerformIO)
+#if !MIN_VERSION_template_haskell(2, 8, 0)
+import qualified Data.ByteString.Char8 as ByteString.Char8
+#endif
 
 -- Vector
 import qualified Data.Vector as Vector.Boxed
@@ -204,12 +209,24 @@ instance Lift Text.Lazy.Text where
 --------------------------------------------------------------------------------
 -- ByteString
 instance Lift ByteString.ByteString where
-  lift b = [| ByteString.pack b' |] where
-    b' = ByteString.unpack b
+  -- this is essentially what e.g. file-embed does
+  lift b = return $ AppE (VarE 'unsafePerformIO) $
+    VarE 'ByteString.Unsafe.unsafePackAddressLen `AppE` l `AppE` b'
+    where
+      l  = LitE $ IntegerL $ fromIntegral $ ByteString.length b
+      b' =
+#if MIN_VERSION_template_haskell(2, 8, 0)
+        LitE $ StringPrimL $ ByteString.unpack b
+#else
+        LitE $ StringPrimL $ ByteString.Char8.unpack b
+#endif
 
 instance Lift ByteString.Lazy.ByteString where
-  lift b = [| ByteString.Lazy.pack b' |] where
-    b' = ByteString.Lazy.unpack b
+  lift lb = do
+    b' <- lift b
+    return  (VarE 'ByteString.Lazy.fromChunks `AppE` b')
+    where
+      b = ByteString.Lazy.toChunks lb
 
 --------------------------------------------------------------------------------
 -- Vector

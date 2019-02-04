@@ -30,7 +30,7 @@ library
         Instances.TH.Lift
     build-depends:
         base >=4.3 && <5,
-        template-haskell,
+        template-haskell >=2.5.0.0,
         containers,
         vector >= 0.4,
         text,

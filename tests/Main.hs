@@ -109,8 +109,14 @@ prop_lazy_text = $(lift $ Text.Lazy.pack textdata) == Text.Lazy.pack textdata
 prop_bytestring :: Bool
 prop_bytestring = $(lift $ ByteString.pack bytedata) == ByteString.pack bytedata
 
+prop_big_bytestring :: Bool
+prop_big_bytestring = $(lift bigByteString) == bigByteString
+
 prop_lazy_bytestring :: Bool
 prop_lazy_bytestring = $(lift $ ByteString.Lazy.pack bytedata) == ByteString.Lazy.pack bytedata
+
+prop_big_lazy_bytestring :: Bool
+prop_big_lazy_bytestring = $(lift bigLazyByteString) == bigLazyByteString
 
 --------------------------------------------------------------------------------
 -- Vector

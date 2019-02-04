@@ -4,6 +4,8 @@ import Data.Tree
 import Data.Word
 import Numeric.Natural (Natural)
 import Data.List.NonEmpty (NonEmpty (..))
+import qualified Data.ByteString as ByteString
+import qualified Data.ByteString.Lazy as ByteString.Lazy
 
 mapdata :: [(Int, Rational)]
 mapdata = [(10, 20), (3,13), (2242,234), (324, 543.3)]
@@ -19,6 +21,12 @@ textdata = "Some text! Hello world!"
 
 bytedata :: [Word8]
 bytedata = map fromIntegral setdata
+
+bigByteString :: ByteString.ByteString
+bigByteString = ByteString.pack $ replicate 16384 97 -- 'a'
+
+bigLazyByteString :: ByteString.Lazy.ByteString
+bigLazyByteString = ByteString.Lazy.pack $ replicate 16384 98 -- 'b'
 
 nonEmptyNatural :: NonEmpty Natural
 nonEmptyNatural = 0 :| [1, 2, 3]
