@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE TemplateHaskell #-}
 module Main where
 
@@ -10,6 +11,7 @@ import Instances.TH.Lift()
 import Language.Haskell.TH.Syntax
 import System.Exit
 import Test.QuickCheck.All
+import Numeric.Natural (Natural)
 
 import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
@@ -60,6 +62,20 @@ prop_float = $(lift (1.1 :: Float)) == (1.1 :: Float)
 prop_double :: Bool
 prop_double = $(lift (1.1 :: Double)) == (1.1 :: Double)
 
+prop_natural :: Bool
+prop_natural = $(lift (1 :: Natural)) == (1 :: Natural)
+
+prop_nonempty_natural :: Bool
+#if MIN_VERSION_base(4,10,0)
+-- this test will fail, as there aren't yet semigroups with NonEmpty instance
+prop_nonempty_natural = $(lift nonEmptyNatural) == nonEmptyNatural
+#else
+prop_nonempty_natural = True
+#endif
+
+prop_unit :: Bool
+prop_unit = $(lift ()) == ()
+
 --------------------------------------------------------------------------------
 -- Containers
 prop_lazy_int_map :: Bool
@@ -93,8 +109,14 @@ prop_lazy_text = $(lift $ Text.Lazy.pack textdata) == Text.Lazy.pack textdata
 prop_bytestring :: Bool
 prop_bytestring = $(lift $ ByteString.pack bytedata) == ByteString.pack bytedata
 
+prop_big_bytestring :: Bool
+prop_big_bytestring = $(lift bigByteString) == bigByteString
+
 prop_lazy_bytestring :: Bool
 prop_lazy_bytestring = $(lift $ ByteString.Lazy.pack bytedata) == ByteString.Lazy.pack bytedata
+
+prop_big_lazy_bytestring :: Bool
+prop_big_lazy_bytestring = $(lift bigLazyByteString) == bigLazyByteString
 
 --------------------------------------------------------------------------------
 -- Vector
