@@ -104,6 +104,9 @@ import qualified Data.Vector.Primitive as Vector.Primitive
 import qualified Data.Vector.Storable as Vector.Storable
 import qualified Data.Vector.Unboxed as Vector.Unboxed
 
+-- transformers (or base)
+import Control.Applicative (Const (..))
+import Data.Functor.Identity (Identity (..))
 
 --------------------------------------------------------------------------------
 
@@ -245,3 +248,11 @@ instance (Vector.Unboxed.Unbox a, Lift a) => Lift (Vector.Unboxed.Vector a) wher
 instance Lift a => Lift (Vector.Boxed.Vector a) where
   lift v = [| Vector.Boxed.fromList v' |] where
     v' = Vector.Boxed.toList v
+
+--------------------------------------------------------------------------------
+-- Transformers
+instance Lift a => Lift (Identity a) where
+  lift (Identity a) = [| Identity a |]
+
+instance Lift a => Lift (Const a b) where
+  lift (Const a) = [| Const a |]
