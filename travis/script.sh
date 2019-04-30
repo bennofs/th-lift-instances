@@ -31,7 +31,7 @@ set +e
 if [ -n "$ROOT" ]; then
   step_suppress "Checking for unused dependencies" << EOF
     mv stack.yaml stack.yaml.save
-    packunused --ignore-package base
+    packunused --ignore-package base --ignore-package transformers --ignore-package th-lift
     mv stack.yaml.save stack.yaml
 EOF
 fi
