@@ -86,8 +86,8 @@ import qualified Data.Set as Set
 import qualified Data.Tree as Tree
 
 -- Text
-import qualified Data.Text as Text
-import qualified Data.Text.Lazy as Text.Lazy
+import qualified Data.Text as Text ()
+import qualified Data.Text.Lazy as Text.Lazy ()
 
 -- ByteString
 import qualified Data.ByteString as ByteString
