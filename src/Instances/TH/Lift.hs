@@ -200,16 +200,6 @@ instance Lift a => Lift (Tree.Tree a) where
   lift (Tree.Node x xs) = [| Tree.Node x xs |]
 
 --------------------------------------------------------------------------------
--- Text
-instance Lift Text.Text where
-  lift t = [| Text.pack t' |] where
-    t' = Text.unpack t
-
-instance Lift Text.Lazy.Text where
-  lift t = [| Text.Lazy.pack t' |] where
-    t' = Text.Lazy.unpack t
-
---------------------------------------------------------------------------------
 -- ByteString
 instance Lift ByteString.ByteString where
   -- this is essentially what e.g. file-embed does

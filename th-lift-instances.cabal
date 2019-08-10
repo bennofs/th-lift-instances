@@ -39,7 +39,7 @@ library
         template-haskell >=2.5.0.0,
         containers,
         vector >= 0.4,
-        text,
+        text >= 1.2.4.0,
         transformers,
         bytestring
 
