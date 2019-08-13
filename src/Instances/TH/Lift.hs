@@ -85,9 +85,11 @@ import qualified Data.Sequence as Sequence
 import qualified Data.Set as Set
 import qualified Data.Tree as Tree
 
+#if !MIN_VERSION_text(1,2,4)
 -- Text
 import qualified Data.Text as Text
 import qualified Data.Text.Lazy as Text.Lazy
+#endif
 
 -- ByteString
 import qualified Data.ByteString as ByteString
@@ -199,6 +201,7 @@ instance Lift a => Lift (Set.Set a) where
 instance Lift a => Lift (Tree.Tree a) where
   lift (Tree.Node x xs) = [| Tree.Node x xs |]
 
+#if !MIN_VERSION_text(1,2,4)
 --------------------------------------------------------------------------------
 -- Text
 instance Lift Text.Text where
@@ -208,6 +211,7 @@ instance Lift Text.Text where
 instance Lift Text.Lazy.Text where
   lift t = [| Text.Lazy.pack t' |] where
     t' = Text.Lazy.unpack t
+#endif
 
 --------------------------------------------------------------------------------
 -- ByteString
