@@ -238,19 +238,23 @@ instance Lift ByteString.Lazy.ByteString where
 --------------------------------------------------------------------------------
 -- Vector
 instance (Vector.Primitive.Prim a, Lift a) => Lift (Vector.Primitive.Vector a) where
-  lift v = [| Vector.Primitive.fromList v' |] where
+  lift v = [| Vector.Primitive.fromListN n' v' |] where
+    n' = Vector.Primitive.length v
     v' = Vector.Primitive.toList v
 
 instance (Vector.Storable.Storable a, Lift a) => Lift (Vector.Storable.Vector a) where
-  lift v = [| Vector.Storable.fromList v' |] where
+  lift v = [| Vector.Storable.fromListN n' v' |] where
+    n' = Vector.Storable.length v
     v' = Vector.Storable.toList v
 
 instance (Vector.Unboxed.Unbox a, Lift a) => Lift (Vector.Unboxed.Vector a) where
-  lift v = [| Vector.Unboxed.fromList v' |] where
+  lift v = [| Vector.Unboxed.fromListN n' v' |] where
+    n' = Vector.Unboxed.length v
     v' = Vector.Unboxed.toList v
 
 instance Lift a => Lift (Vector.Boxed.Vector a) where
-  lift v = [| Vector.Boxed.fromList v' |] where
+  lift v = [| Vector.Boxed.fromListN n' v' |] where
+    n' = Vector.Boxed.length v
     v' = Vector.Boxed.toList v
 
 --------------------------------------------------------------------------------
