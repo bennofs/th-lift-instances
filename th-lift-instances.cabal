@@ -38,7 +38,7 @@ library
         base >=4.3 && <5,
         template-haskell >=2.5.0.0,
         containers,
-        vector >= 0.4,
+        vector >= 0.7,
         text,
         transformers,
         bytestring
