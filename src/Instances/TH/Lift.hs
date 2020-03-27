@@ -54,6 +54,9 @@ module Instances.TH.Lift
   ) where
 
 import Language.Haskell.TH.Syntax (Lift(..))
+#if MIN_VERSION_template_haskell(2,16,0)
+import Language.Haskell.TH.Syntax (unsafeTExpCoerce)
+#endif
 import Language.Haskell.TH
 
 import qualified Data.Foldable as F
@@ -109,6 +112,12 @@ import qualified Data.Vector.Unboxed as Vector.Unboxed
 -- transformers (or base)
 import Control.Applicative (Const (..))
 import Data.Functor.Identity (Identity (..))
+
+#if MIN_VERSION_template_haskell(2,16,0)
+#define LIFT_TYPED_DEFAULT liftTyped = unsafeTExpCoerce . lift
+#else
+#define LIFT_TYPED_DEFAULT
+#endif
 
 --------------------------------------------------------------------------------
 
@@ -181,25 +190,31 @@ instance Lift a => Lift (NonEmpty a) where
 instance Lift v => Lift (IntMap.IntMap v) where
   lift m = [| IntMap.fromList m' |] where
     m' = IntMap.toList m
+  LIFT_TYPED_DEFAULT
 
 instance Lift IntSet.IntSet where
   lift s = [| IntSet.fromList s' |] where
     s' = IntSet.toList s
+  LIFT_TYPED_DEFAULT
 
 instance (Lift k, Lift v) => Lift (Map.Map k v) where
   lift m = [| Map.fromList m' |] where
     m' = Map.toList m
+  LIFT_TYPED_DEFAULT
 
 instance Lift a => Lift (Sequence.Seq a) where
   lift s = [| Sequence.fromList s' |] where
     s' = F.toList s
+  LIFT_TYPED_DEFAULT
 
 instance Lift a => Lift (Set.Set a) where
   lift s = [| Set.fromList s' |] where
     s' = Set.toList s
+  LIFT_TYPED_DEFAULT
 
 instance Lift a => Lift (Tree.Tree a) where
   lift (Tree.Node x xs) = [| Tree.Node x xs |]
+  LIFT_TYPED_DEFAULT
 
 #if !MIN_VERSION_text(1,2,4)
 --------------------------------------------------------------------------------
@@ -207,10 +222,12 @@ instance Lift a => Lift (Tree.Tree a) where
 instance Lift Text.Text where
   lift t = [| Text.pack t' |] where
     t' = Text.unpack t
+  LIFT_TYPED_DEFAULT
 
 instance Lift Text.Lazy.Text where
   lift t = [| Text.Lazy.pack t' |] where
     t' = Text.Lazy.unpack t
+  LIFT_TYPED_DEFAULT
 #endif
 
 --------------------------------------------------------------------------------
@@ -227,6 +244,7 @@ instance Lift ByteString.ByteString where
 #else
         LitE $ StringPrimL $ ByteString.Char8.unpack b
 #endif
+  LIFT_TYPED_DEFAULT
 
 instance Lift ByteString.Lazy.ByteString where
   lift lb = do
@@ -234,6 +252,7 @@ instance Lift ByteString.Lazy.ByteString where
     return  (VarE 'ByteString.Lazy.fromChunks `AppE` b')
     where
       b = ByteString.Lazy.toChunks lb
+  LIFT_TYPED_DEFAULT
 
 --------------------------------------------------------------------------------
 -- Vector
@@ -241,26 +260,32 @@ instance (Vector.Primitive.Prim a, Lift a) => Lift (Vector.Primitive.Vector a) w
   lift v = [| Vector.Primitive.fromListN n' v' |] where
     n' = Vector.Primitive.length v
     v' = Vector.Primitive.toList v
+  LIFT_TYPED_DEFAULT
 
 instance (Vector.Storable.Storable a, Lift a) => Lift (Vector.Storable.Vector a) where
   lift v = [| Vector.Storable.fromListN n' v' |] where
     n' = Vector.Storable.length v
     v' = Vector.Storable.toList v
+  LIFT_TYPED_DEFAULT
 
 instance (Vector.Unboxed.Unbox a, Lift a) => Lift (Vector.Unboxed.Vector a) where
   lift v = [| Vector.Unboxed.fromListN n' v' |] where
     n' = Vector.Unboxed.length v
     v' = Vector.Unboxed.toList v
+  LIFT_TYPED_DEFAULT
 
 instance Lift a => Lift (Vector.Boxed.Vector a) where
   lift v = [| Vector.Boxed.fromListN n' v' |] where
     n' = Vector.Boxed.length v
     v' = Vector.Boxed.toList v
+  LIFT_TYPED_DEFAULT
 
 --------------------------------------------------------------------------------
 -- Transformers
 instance Lift a => Lift (Identity a) where
   lift (Identity a) = [| Identity a |]
+  LIFT_TYPED_DEFAULT
 
 instance Lift a => Lift (Const a b) where
   lift (Const a) = [| Const a |]
+  LIFT_TYPED_DEFAULT
