@@ -30,6 +30,7 @@ if diff -u installplan.txt $HOME/.cabsnap/installplan.txt; then
   step "Restoring build cache" << EOF
     rm -rf .ghc
     cp -a $HOME/.cabsnap/ghc $HOME/.ghc
+    mkdir -p $HOME/.cabsnap/lib $HOME/.cabsnap/share $HOME/.cabsnap/bin $HOME/.cabsnap/store
     cp -a $HOME/.cabsnap/lib $HOME/.cabsnap/share $HOME/.cabsnap/bin $HOME/.cabsnap/store $HOME/.cabal
 EOF
 else
