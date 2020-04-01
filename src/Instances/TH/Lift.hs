@@ -117,11 +117,11 @@ import Data.Functor.Identity (Identity (..))
 #if MIN_VERSION_template_haskell(2,16,0)
 #define LIFT liftTyped
 #define QUOTE(x) [|| (x) ||]
-#define TYPED unsafeTExpCoerce
+#define TYPED_RETURN unsafeTExpCoerce . return
 #else
 #define LIFT lift
 #define QUOTE(x) [| (x) |]
-#define TYPED id
+#define TYPED_RETURN return
 #endif
 
 --------------------------------------------------------------------------------
@@ -231,7 +231,7 @@ instance Lift Text.Lazy.Text where
 -- ByteString
 instance Lift ByteString.ByteString where
   -- this is essentially what e.g. file-embed does
-  LIFT b = TYPED $ return $ AppE (VarE 'unsafePerformIO) $
+  LIFT b = TYPED_RETURN $ AppE (VarE 'unsafePerformIO) $
     VarE 'ByteString.Unsafe.unsafePackAddressLen `AppE` l `AppE` b'
     where
       l  = LitE $ IntegerL $ fromIntegral $ ByteString.length b
