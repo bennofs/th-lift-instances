@@ -1,0 +1,6 @@
+verbose: 2
+tests: True
+benchmarks: True
+
+package th-lift-instances
+  ghc-options: -Wall -Werror
