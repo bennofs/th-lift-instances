@@ -52,7 +52,7 @@ EOF
 fi
 
 if [ ! -z $ROOT ]; then
-  TOOLS="hlint packunused haddock"
+  TOOLS="hlint haddock"
 
   step "Computing tool versions" << EOF
     echo "Cabal $CABAL_FULL_VERSION" > toolversions.txt
