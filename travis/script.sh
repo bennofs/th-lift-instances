@@ -13,29 +13,23 @@ fi
 
 set -e
 step "Configuring project" << 'EOF'
-  cabal configure --enable-tests --enable-benchmarks -v2 --ghc-options="-Wall -Werror -ddump-minimal-imports" &> cabal.log || (
-    cat cabal.log 
-    exit 1
-  )
-  echo "Using packages: "
-  sed -nre 's/Dependency ([^ ]*) ==([^ :]*).*/\1 \2/p' cabal.log | column -t | sed -e "s/^/  /"
-  echo "Flags chosen: "
-  sed -nr -e ':x; /\,$/ { N; s/,\n/,/; tx }' -e 's/Flags chosen: (.*)/\1/' -e 's/, /,/gp' cabal.log | tr ',' '\n'
+  if [ -n "$V2" ];
+    cp travis/cabal.project.local .
+  else
+    cabal configure --enable-tests --enable-benchmarks -v2 --ghc-options="-Wall -Werror -ddump-minimal-imports" &> cabal.log || (
+      cat cabal.log
+      exit 1
+    )
+    echo "Using packages: "
+    sed -nre 's/Dependency ([^ ]*) ==([^ :]*).*/\1 \2/p' cabal.log | column -t | sed -e "s/^/  /"
+    echo "Flags chosen: "
+    sed -nr -e ':x; /\,$/ { N; s/,\n/,/; tx }' -e 's/Flags chosen: (.*)/\1/' -e 's/, /,/gp' cabal.log | tr ',' '\n'
+  fi
 EOF
 
 step "Building project" << EOF
   cabal build
 EOF
-
-set +e
-if [ -n "$ROOT" ]; then
-  step_suppress "Checking for unused dependencies" << EOF
-    mv stack.yaml stack.yaml.save
-    packunused --ignore-package base --ignore-package transformers --ignore-package th-lift --ignore-package text
-    mv stack.yaml.save stack.yaml
-EOF
-fi
-set -e
 
 step "Running tests" << EOF
   cabal test
