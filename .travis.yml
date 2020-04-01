@@ -40,13 +40,13 @@ matrix:
     - env: GHCVER=8.6.5 CABALVER=2.4
       compiler: ghc-8.6.5
       addons: {apt: {packages: [cabal-install-2.4, ghc-8.6.5, alex-3.1.7, happy-1.19.5], sources: [hvr-ghc]}}
-    - env: GHCVER=8.8.3 CABALVER=3.0 ROOT=1
+    - env: GHCVER=8.8.3 CABALVER=3.0 ROOT=1 V2=1
       compiler: ghc-8.8.3
       addons: {apt: {packages: [cabal-install-3.0, ghc-8.8.3, alex-3.1.7, happy-1.19.5], sources: [hvr-ghc]}}
-    - env: GHCVER=8.10.1 CABALVER=3.2
+    - env: GHCVER=8.10.1 CABALVER=3.2 V2=1
       compiler: ghc-8.10.1
       addons: {apt: {packages: [cabal-install-3.2, ghc-8.10.1, alex-3.1.7, happy-1.19.5], sources: [hvr-ghc]}}
-    - env: GHCVER=head CABALVER=head ALLOW_NEWER="template-haskell"
+    - env: GHCVER=head CABALVER=head ALLOW_NEWER="template-haskell" V2=1
       compiler: ghc-head
       addons: {apt: {packages: [cabal-install-head, ghc-head, alex-3.1.7, happy-1.19.5], sources: [hvr-ghc]}}
   allow_failures:
