@@ -13,7 +13,7 @@ fi
 
 set -e
 step "Configuring project" << 'EOF'
-  if [ -n "$V2" ];
+  if [ -n "$V2" ]; then
     cp travis/cabal.project.local .
   else
     cabal configure --enable-tests --enable-benchmarks -v2 --ghc-options="-Wall -Werror -ddump-minimal-imports" &> cabal.log || (
