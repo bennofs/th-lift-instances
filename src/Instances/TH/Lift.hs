@@ -114,14 +114,14 @@ import Control.Applicative (Const (..))
 import Data.Functor.Identity (Identity (..))
 
 -- support typed template haskell (requires template-haskell>=1.16)
-#if !MIN_VERSION_template_haskell(1,16,0)
-#define LIFT lift
-#define QUOTE(x) [| x |]
-#define TYPED
-#else
+#if MIN_VERSION_template_haskell(2,16,0)
 #define LIFT liftTyped
 #define QUOTE(x) [|| (x) ||]
 #define TYPED unsafeTExpCoerce
+#else
+#define LIFT lift
+#define QUOTE(x) [| (x) |]
+#define TYPED id
 #endif
 
 --------------------------------------------------------------------------------
