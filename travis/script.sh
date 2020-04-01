@@ -50,13 +50,10 @@ pkgid=$(cabal info . | awk '{print $2; exit}')
 
 step_suppress "Checking source distribution" << EOF
   # The following scriptlet checks that the resulting source distribution can be built & installed
-  SRC_TGZ="dist/$pkgid.tar.gz"
-  if [ -f "\$SRC_TGZ" ]; then
-    cabal install --enable-tests --enable-benchmarks "\$SRC_TGZ"
-  else
-    echo "expected '\$SRC_TGZ' not found"
-    exit 1
-  fi    
+  cd travis/sdist-test
+  cabal build th-lift-instances
+  cabal test th-lift-instances
+  cd ../../
 EOF
 
 if [ -n "$ROOT" ]; then
