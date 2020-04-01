@@ -65,7 +65,7 @@ EOF
     step "Installing tools" << EOF
       rm -rf $HOME/tools
       mkdir -p $HOME/tools
-      cabal --store-dir $HOME/tools v2-install --installdir $HOME/tools/bin $TOOLS --constraint "Cabal==$CABAL_FULL_VERSION" --allow-newer
+      cabal --store-dir $HOME/tools v2-install --installdir $HOME/tools/bin $TOOLS --constraint "Cabal==$CABAL_FULL_VERSION"
       rm -f $HOME/tools/bin/{happy,ghc,alex,cabal}
 EOF
     cp toolversions.txt $HOME/tools
