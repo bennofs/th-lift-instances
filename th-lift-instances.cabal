@@ -11,10 +11,9 @@ homepage: http://github.com/bennofs/th-lift-instances/
 bug-reports: http://github.com/bennofs/th-lift-instances/issues
 synopsis: Lift instances for template-haskell for common data types.
 description:
-    Most data types in haskell platform do not have Lift instances.
+    Most data types in the haskell platform do not have Lift instances.
     This package provides orphan instances for containers, text, bytestring and vector.
-    It also acts as a compat instances, definining instances not existing
-    in @template-haskell@
+    It also provides compat instances for older versions of @template-haskell@
     .
     Note that <https://hackage.haskell.org/package/th-lift th-lift> package provides
     Template Haskell based derivation of @Lift@ instances (when you cannot use @DeriveLift@ extension),
