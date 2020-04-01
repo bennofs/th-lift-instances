@@ -4,9 +4,9 @@ begin_steps
 
 if [ -n "$ROOT" ]; then
   step "Checking style with HLint" << EOF
-    hlint --cpp-simple src
+    hlint src
     if [ -d tests ]; then
-      hlint --cpp-simple tests
+      hlint tests
     fi
 EOF
 fi
