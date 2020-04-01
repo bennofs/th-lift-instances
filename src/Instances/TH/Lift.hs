@@ -54,6 +54,9 @@ module Instances.TH.Lift
   ) where
 
 import Language.Haskell.TH.Syntax (Lift(..))
+#if MIN_VERSION_template_haskell(2,16,0)
+import Language.Haskell.TH.Syntax (unsafeTExpCoerce)
+#endif
 import Language.Haskell.TH
 
 import qualified Data.Foldable as F
@@ -109,6 +112,17 @@ import qualified Data.Vector.Unboxed as Vector.Unboxed
 -- transformers (or base)
 import Control.Applicative (Const (..))
 import Data.Functor.Identity (Identity (..))
+
+-- support typed template haskell (requires template-haskell>=1.16)
+#if !MIN_VERSION_template_haskell(1,16,0)
+#define LIFT lift
+#define QUOTE(x) [| x |]
+#define TYPED
+#else
+#define LIFT liftTyped
+#define QUOTE(x) [|| (x) ||]
+#define TYPED unsafeTExpCoerce
+#endif
 
 --------------------------------------------------------------------------------
 
@@ -179,45 +193,45 @@ instance Lift a => Lift (NonEmpty a) where
 --------------------------------------------------------------------------------
 -- Containers
 instance Lift v => Lift (IntMap.IntMap v) where
-  lift m = [| IntMap.fromList m' |] where
-    m' = IntMap.toList m
+  LIFT m = QUOTE(IntMap.fromDistinctAscList ml) where
+    ml = IntMap.toAscList m
 
 instance Lift IntSet.IntSet where
-  lift s = [| IntSet.fromList s' |] where
-    s' = IntSet.toList s
+  LIFT s = QUOTE(IntSet.fromDistinctAscList sl) where
+    sl = IntSet.toAscList s
 
 instance (Lift k, Lift v) => Lift (Map.Map k v) where
-  lift m = [| Map.fromList m' |] where
-    m' = Map.toList m
+  LIFT m = QUOTE(Map.fromDistinctAscList ml) where
+    ml = Map.toAscList m
 
 instance Lift a => Lift (Sequence.Seq a) where
-  lift s = [| Sequence.fromList s' |] where
-    s' = F.toList s
+  LIFT s = QUOTE(Sequence.fromList sl) where
+    sl = F.toList s
 
 instance Lift a => Lift (Set.Set a) where
-  lift s = [| Set.fromList s' |] where
-    s' = Set.toList s
+  LIFT s = QUOTE(Set.fromDistinctAscList sl) where
+    sl = Set.toAscList s
 
 instance Lift a => Lift (Tree.Tree a) where
-  lift (Tree.Node x xs) = [| Tree.Node x xs |]
+  LIFT (Tree.Node x xs) = QUOTE(Tree.Node x xs)
 
 #if !MIN_VERSION_text(1,2,4)
 --------------------------------------------------------------------------------
 -- Text
 instance Lift Text.Text where
-  lift t = [| Text.pack t' |] where
-    t' = Text.unpack t
+  LIFT t = QUOTE(Text.pack tp) where
+    tp = Text.unpack t
 
 instance Lift Text.Lazy.Text where
-  lift t = [| Text.Lazy.pack t' |] where
-    t' = Text.Lazy.unpack t
+  LIFT t = QUOTE(Text.Lazy.pack tp) where
+    tp = Text.Lazy.unpack t
 #endif
 
 --------------------------------------------------------------------------------
 -- ByteString
 instance Lift ByteString.ByteString where
   -- this is essentially what e.g. file-embed does
-  lift b = return $ AppE (VarE 'unsafePerformIO) $
+  LIFT b = TYPED $ return $ AppE (VarE 'unsafePerformIO) $
     VarE 'ByteString.Unsafe.unsafePackAddressLen `AppE` l `AppE` b'
     where
       l  = LitE $ IntegerL $ fromIntegral $ ByteString.length b
@@ -229,38 +243,35 @@ instance Lift ByteString.ByteString where
 #endif
 
 instance Lift ByteString.Lazy.ByteString where
-  lift lb = do
-    b' <- lift b
-    return  (VarE 'ByteString.Lazy.fromChunks `AppE` b')
-    where
-      b = ByteString.Lazy.toChunks lb
+  LIFT lb = QUOTE(ByteString.Lazy.fromChunks bc) where
+    bc = ByteString.Lazy.toChunks lb
 
 --------------------------------------------------------------------------------
 -- Vector
 instance (Vector.Primitive.Prim a, Lift a) => Lift (Vector.Primitive.Vector a) where
-  lift v = [| Vector.Primitive.fromListN n' v' |] where
-    n' = Vector.Primitive.length v
-    v' = Vector.Primitive.toList v
+  LIFT v = QUOTE(Vector.Primitive.fromListN np vp) where
+    np = Vector.Primitive.length v
+    vp = Vector.Primitive.toList v
 
 instance (Vector.Storable.Storable a, Lift a) => Lift (Vector.Storable.Vector a) where
-  lift v = [| Vector.Storable.fromListN n' v' |] where
-    n' = Vector.Storable.length v
-    v' = Vector.Storable.toList v
+  LIFT v = QUOTE(Vector.Storable.fromListN np vp) where
+    np = Vector.Storable.length v
+    vp = Vector.Storable.toList v
 
 instance (Vector.Unboxed.Unbox a, Lift a) => Lift (Vector.Unboxed.Vector a) where
-  lift v = [| Vector.Unboxed.fromListN n' v' |] where
-    n' = Vector.Unboxed.length v
-    v' = Vector.Unboxed.toList v
+  LIFT v = QUOTE(Vector.Unboxed.fromListN np vp) where
+    np = Vector.Unboxed.length v
+    vp = Vector.Unboxed.toList v
 
 instance Lift a => Lift (Vector.Boxed.Vector a) where
-  lift v = [| Vector.Boxed.fromListN n' v' |] where
-    n' = Vector.Boxed.length v
-    v' = Vector.Boxed.toList v
+  LIFT v = QUOTE(Vector.Boxed.fromListN np vp) where
+    np = Vector.Boxed.length v
+    vp = Vector.Boxed.toList v
 
 --------------------------------------------------------------------------------
 -- Transformers
 instance Lift a => Lift (Identity a) where
-  lift (Identity a) = [| Identity a |]
+  LIFT (Identity a) = QUOTE(Identity a)
 
 instance Lift a => Lift (Const a b) where
-  lift (Const a) = [| Const a |]
+  LIFT (Const a) = QUOTE(Const a)
