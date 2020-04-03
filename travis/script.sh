@@ -85,7 +85,7 @@ EOF
     step "Uploading package candidate" << EOF
       curl https://hackage.haskell.org/packages/candidates \
         -H 'Accept: text/plain' \
-        -u '$HACKAGE_AUTH' -F 'package=@dist-newtyle/sdist/$pkgid.tar.gz'
+        -u '$HACKAGE_AUTH' -F 'package=@dist-newstyle/sdist/$pkgid.tar.gz'
 EOF
   fi
 fi
