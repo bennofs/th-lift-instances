@@ -47,29 +47,30 @@ step "Creating source distribution" << EOF
 EOF
 
 pkgid=$(cabal info . | awk '{print $2; exit}')
+pkgname=$(awk '/name/ { print $2; exit}' *.cabal)
 
 step_suppress "Checking source distribution" << EOF
   # The following scriptlet checks that the resulting source distribution can be built & installed
-  cd travis/sdist-test
-  cabal build th-lift-instances
-  cabal test th-lift-instances
-  cd ../../
+  if [ -n "$V2" ]; then
+    cd dist-newstyle/sdist
+    echo "packages: ./$pkgid.tar.gz" > cabal.project
+    cabal build $pkgname
+    cabal test $pkgname
+    cd ../../
+  else
+    SRC_TGZ="dist/$pkgid.tar.gz"
+    if [ -f "\$SRC_TGZ" ]; then
+      cabal install --enable-tests --enable-benchmarks "\$SRC_TGZ"
+    else
+      echo "expected '\$SRC_TGZ' not found"
+      exit 1
+    fi
+  fi
 EOF
 
 if [ -n "$ROOT" ]; then
   step "Generating package documentation" << EOF
-    HYPERLINK_FLAG="--hyperlink-source"
-    if hadddock --hyperlinked-source &> /dev/null; then
-      HYPERLINK_FLAG="--haddock-option='--hyperlinked-source'"
-    fi
-    cabal haddock \
-      --html --html-location='/package/\$pkg-\$version/docs'\
-      --contents-location='/package/\$pkg-\$version'\
-      \$HYPERLINK_FLAG \
-      --hoogle
-    cp -R dist/doc/html/* $pkgid-docs
-    tar cvz --format ustar $pkgid-docs -f $pkgid-docs.tar.gz
-    rm -r $pkgid-docs
+    cabal haddock --haddock-for-hackage
 EOF
 fi
 
@@ -78,13 +79,13 @@ if [ -n "$ROOT" -a -n "$HACKAGE_AUTH" ]; then
     step "Uploading package" << EOF
       curl https://hackage.haskell.org/packages \
         -H 'Accept: text/plain' \
-        -u '$HACKAGE_AUTH' -F 'package=@dist/$pkgid.tar.gz'
+        -u '$HACKAGE_AUTH' -F 'package=@dist-newstyle/sdist/$pkgid.tar.gz'
 EOF
   else
     step "Uploading package candidate" << EOF
       curl https://hackage.haskell.org/packages/candidates \
         -H 'Accept: text/plain' \
-        -u '$HACKAGE_AUTH' -F 'package=@dist/$pkgid.tar.gz'
+        -u '$HACKAGE_AUTH' -F 'package=@dist-newtyle/sdist/$pkgid.tar.gz'
 EOF
   fi
 fi
@@ -95,7 +96,7 @@ if [ -n "$ROOT" -a -n "$HACKAGE_AUTH" ]; then
     step "Uploading package documentation to hackage" << EOF
       curl -X PUT '$URL' \
         -H 'Content-Type: application/x-tar' -H 'Content-Encoding: gzip' \
-        -u '$HACKAGE_AUTH' --data-binary '@$pkgid-docs.tar.gz'
+        -u '$HACKAGE_AUTH' --data-binary '@dist-newstyle/$pkgid-docs.tar.gz'
 EOF
   fi
 fi
