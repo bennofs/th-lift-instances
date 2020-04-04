@@ -4,38 +4,32 @@ begin_steps
 
 if [ -n "$ROOT" ]; then
   step "Checking style with HLint" << EOF
-    hlint --cpp-simple src
+    hlint src
     if [ -d tests ]; then
-      hlint --cpp-simple tests
+      hlint tests
     fi
 EOF
 fi
 
 set -e
 step "Configuring project" << 'EOF'
-  cabal configure --enable-tests --enable-benchmarks -v2 --ghc-options="-Wall -Werror -ddump-minimal-imports" &> cabal.log || (
-    cat cabal.log 
-    exit 1
-  )
-  echo "Using packages: "
-  sed -nre 's/Dependency ([^ ]*) ==([^ :]*).*/\1 \2/p' cabal.log | column -t | sed -e "s/^/  /"
-  echo "Flags chosen: "
-  sed -nr -e ':x; /\,$/ { N; s/,\n/,/; tx }' -e 's/Flags chosen: (.*)/\1/' -e 's/, /,/gp' cabal.log | tr ',' '\n'
+  if [ -n "$V2" ]; then
+    cp travis/cabal.project.local .
+  else
+    cabal configure --enable-tests --enable-benchmarks -v2 --ghc-options="-Wall -Werror -ddump-minimal-imports" &> cabal.log || (
+      cat cabal.log
+      exit 1
+    )
+    echo "Using packages: "
+    sed -nre 's/Dependency ([^ ]*) ==([^ :]*).*/\1 \2/p' cabal.log | column -t | sed -e "s/^/  /"
+    echo "Flags chosen: "
+    sed -nr -e ':x; /\,$/ { N; s/,\n/,/; tx }' -e 's/Flags chosen: (.*)/\1/' -e 's/, /,/gp' cabal.log | tr ',' '\n'
+  fi
 EOF
 
 step "Building project" << EOF
   cabal build
 EOF
-
-set +e
-if [ -n "$ROOT" ]; then
-  step_suppress "Checking for unused dependencies" << EOF
-    mv stack.yaml stack.yaml.save
-    packunused --ignore-package base --ignore-package transformers --ignore-package th-lift --ignore-package text
-    mv stack.yaml.save stack.yaml
-EOF
-fi
-set -e
 
 step "Running tests" << EOF
   cabal test
@@ -53,32 +47,30 @@ step "Creating source distribution" << EOF
 EOF
 
 pkgid=$(cabal info . | awk '{print $2; exit}')
+pkgname=$(awk '/name/ { print $2; exit}' *.cabal)
 
 step_suppress "Checking source distribution" << EOF
   # The following scriptlet checks that the resulting source distribution can be built & installed
-  SRC_TGZ="dist/$pkgid.tar.gz"
-  if [ -f "\$SRC_TGZ" ]; then
-    cabal install --enable-tests --enable-benchmarks "\$SRC_TGZ"
+  if [ -n "$V2" ]; then
+    cd dist-newstyle/sdist
+    echo "packages: ./$pkgid.tar.gz" > cabal.project
+    cabal build $pkgname
+    cabal test $pkgname
+    cd ../../
   else
-    echo "expected '\$SRC_TGZ' not found"
-    exit 1
-  fi    
+    SRC_TGZ="dist/$pkgid.tar.gz"
+    if [ -f "\$SRC_TGZ" ]; then
+      cabal install --enable-tests --enable-benchmarks "\$SRC_TGZ"
+    else
+      echo "expected '\$SRC_TGZ' not found"
+      exit 1
+    fi
+  fi
 EOF
 
 if [ -n "$ROOT" ]; then
   step "Generating package documentation" << EOF
-    HYPERLINK_FLAG="--hyperlink-source"
-    if hadddock --hyperlinked-source &> /dev/null; then
-      HYPERLINK_FLAG="--haddock-option='--hyperlinked-source'"
-    fi
-    cabal haddock \
-      --html --html-location='/package/\$pkg-\$version/docs'\
-      --contents-location='/package/\$pkg-\$version'\
-      \$HYPERLINK_FLAG \
-      --hoogle
-    cp -R dist/doc/html/* $pkgid-docs
-    tar cvz --format ustar $pkgid-docs -f $pkgid-docs.tar.gz
-    rm -r $pkgid-docs
+    cabal haddock --haddock-for-hackage
 EOF
 fi
 
@@ -87,13 +79,13 @@ if [ -n "$ROOT" -a -n "$HACKAGE_AUTH" ]; then
     step "Uploading package" << EOF
       curl https://hackage.haskell.org/packages \
         -H 'Accept: text/plain' \
-        -u '$HACKAGE_AUTH' -F 'package=@dist/$pkgid.tar.gz'
+        -u '$HACKAGE_AUTH' -F 'package=@dist-newstyle/sdist/$pkgid.tar.gz'
 EOF
   else
     step "Uploading package candidate" << EOF
       curl https://hackage.haskell.org/packages/candidates \
         -H 'Accept: text/plain' \
-        -u '$HACKAGE_AUTH' -F 'package=@dist/$pkgid.tar.gz'
+        -u '$HACKAGE_AUTH' -F 'package=@dist-newstyle/sdist/$pkgid.tar.gz'
 EOF
   fi
 fi
@@ -104,7 +96,7 @@ if [ -n "$ROOT" -a -n "$HACKAGE_AUTH" ]; then
     step "Uploading package documentation to hackage" << EOF
       curl -X PUT '$URL' \
         -H 'Content-Type: application/x-tar' -H 'Content-Encoding: gzip' \
-        -u '$HACKAGE_AUTH' --data-binary '@$pkgid-docs.tar.gz'
+        -u '$HACKAGE_AUTH' --data-binary '@dist-newstyle/$pkgid-docs.tar.gz'
 EOF
   fi
 fi
