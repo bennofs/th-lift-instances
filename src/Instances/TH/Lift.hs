@@ -2,6 +2,8 @@
 {-# LANGUAGE CPP #-}
 #if __GLASGOW_HASKELL__ >= 800
 {-# LANGUAGE TemplateHaskellQuotes #-}
+{-# LANGUAGE DeriveLift #-}
+{-# LANGUAGE StandaloneDeriving #-}
 #else
 {-# LANGUAGE TemplateHaskell #-}
 #endif
@@ -81,12 +83,27 @@ import Data.List.NonEmpty (NonEmpty (..))
 #endif
 
 -- Containers
+import qualified Data.Tree as Tree
+
+#if MIN_VERSION_containers(5,10,1)
+-- recent enough containers exports internals,
+-- so we can use DeriveLift
+-- This way we construct the data type exactly as we have it
+-- during compile time, so there is nothing left for run-time.
+#define HAS_CONTAINERS_INTERNALS 1
+
+import qualified Data.IntMap.Internal as IntMap
+import qualified Data.IntSet.Internal as IntSet
+import qualified Data.Map.Internal as Map
+import qualified Data.Sequence.Internal as Sequence
+import qualified Data.Set.Internal as Set
+#else
 import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
 import qualified Data.Map as Map
 import qualified Data.Sequence as Sequence
 import qualified Data.Set as Set
-import qualified Data.Tree as Tree
+#endif
 
 #if !MIN_VERSION_text(1,2,4)
 -- Text
@@ -187,6 +204,22 @@ instance Lift a => Lift (NonEmpty a) where
 
 --------------------------------------------------------------------------------
 -- Containers
+--
+
+#if __GLASGOW_HASKELL__ >= 800
+deriving instance Lift a => Lift (Tree.Tree a)
+#else
+instance Lift a => Lift (Tree.Tree a) where
+  lift (Tree.Node x xs) = [| Tree.Node x xs |]
+#endif
+
+#if HAS_CONTAINERS_INTERNALS
+deriving instance Lift v => Lift (IntMap.IntMap v)
+deriving instance Lift IntSet.IntSet
+deriving instance (Lift k, Lift v) => Lift (Map.Map k v)
+deriving instance Lift a => Lift (Sequence.Seq a)
+deriving instance Lift a => Lift (Set.Set a)
+#else
 instance Lift v => Lift (IntMap.IntMap v) where
   lift m = [| IntMap.fromList m' |] where
     m' = IntMap.toList m
@@ -211,10 +244,7 @@ instance Lift a => Lift (Set.Set a) where
   lift s = [| Set.fromList s' |] where
     s' = Set.toList s
   LIFT_TYPED_DEFAULT
-
-instance Lift a => Lift (Tree.Tree a) where
-  lift (Tree.Node x xs) = [| Tree.Node x xs |]
-  LIFT_TYPED_DEFAULT
+#endif
 
 #if !MIN_VERSION_text(1,2,4)
 --------------------------------------------------------------------------------
@@ -282,10 +312,14 @@ instance Lift a => Lift (Vector.Boxed.Vector a) where
 
 --------------------------------------------------------------------------------
 -- Transformers
+
+#if __GLASGOW_HASKELL__ >= 800
+deriving instance Lift a => Lift (Identity a)
+deriving instance Lift a => Lift (Const a b)
+#else
 instance Lift a => Lift (Identity a) where
   lift (Identity a) = [| Identity a |]
-  LIFT_TYPED_DEFAULT
 
 instance Lift a => Lift (Const a b) where
   lift (Const a) = [| Const a |]
-  LIFT_TYPED_DEFAULT
+#endif
