@@ -130,7 +130,9 @@ import qualified Data.Vector.Unboxed as Vector.Unboxed
 import Control.Applicative (Const (..))
 import Data.Functor.Identity (Identity (..))
 
-#if MIN_VERSION_template_haskell(2,16,0)
+#if MIN_VERSION_template_haskell(2,17,0)
+#define LIFT_TYPED_DEFAULT liftTyped = Code . unsafeTExpCoerce . lift
+#elif MIN_VERSION_template_haskell(2,16,0)
 #define LIFT_TYPED_DEFAULT liftTyped = unsafeTExpCoerce . lift
 #else
 #define LIFT_TYPED_DEFAULT
