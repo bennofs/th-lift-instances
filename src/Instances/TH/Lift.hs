@@ -130,6 +130,9 @@ import qualified Data.Vector.Unboxed as Vector.Unboxed
 import Control.Applicative (Const (..))
 import Data.Functor.Identity (Identity (..))
 
+-- scientific
+import qualified Data.Scientific as Scientific
+
 #if MIN_VERSION_template_haskell(2,16,0)
 #define LIFT_TYPED_DEFAULT liftTyped = unsafeTExpCoerce . lift
 #else
@@ -323,3 +326,15 @@ instance Lift a => Lift (Identity a) where
 instance Lift a => Lift (Const a b) where
   lift (Const a) = [| Const a |]
 #endif
+
+--------------------------------------------------------------------------------
+-- Scientific
+
+instance Lift Scientific.Scientific where
+  lift scientific =
+    [|
+      Scientific.scientific
+        $(lift (Scientific.coefficient scientific))
+        $(lift (Scientific.base10Exponent scientific))
+      |]
+  LIFT_TYPED_DEFAULT

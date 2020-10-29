@@ -40,7 +40,8 @@ library
         vector >= 0.7,
         text,
         transformers,
-        bytestring
+        bytestring,
+        scientific >=0.3.6 && <0.4
 
     -- the dependency is added to avoid diamond orphans problem.
     -- Without a dependency there could be a plan with th-lift-0.7.x and
