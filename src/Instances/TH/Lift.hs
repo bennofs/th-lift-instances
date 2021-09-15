@@ -1,5 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 #if __GLASGOW_HASKELL__ >= 800
 {-# LANGUAGE TemplateHaskellQuotes #-}
 {-# LANGUAGE DeriveLift #-}
@@ -62,6 +63,9 @@ import Language.Haskell.TH.Syntax (unsafeTExpCoerce)
 import Language.Haskell.TH
 
 import qualified Data.Foldable as F
+#if __GLASGOW_HASKELL__ >= 708
+import Data.Coerce (coerce)
+#endif
 
 -- Base
 #if !MIN_VERSION_template_haskell(2,9,1)
@@ -236,12 +240,30 @@ deriving instance Lift IntSet.IntSet
 deriving instance (Lift k, Lift v) => Lift (Map.Map k v)
 deriving instance Lift a => Lift (Set.Set a)
 
-deriving instance Lift a => Lift (Sequence.Seq a)
 deriving instance Lift a => Lift (Sequence.Elem a)
 deriving instance Lift a => Lift (Sequence.Digit a)
 deriving instance Lift a => Lift (Sequence.Node a)
 deriving instance Lift a => Lift (Sequence.FingerTree a)
+# if __GLASGOW_HASKELL__ >= 708
+-- This gunk reduces the expression size by a substantial
+-- constant factor, which I imagine is good for compilation
+-- speed.
+instance Lift a => Lift (Sequence.Seq a) where
+  lift (Sequence.Seq ft) = [| fixupSeq ft' |]
+    where
+      ft' :: Sequence.FingerTree a
+      ft' = coerce ft
+  LIFT_TYPED_DEFAULT
+
+fixupSeq :: Sequence.FingerTree a -> Sequence.Seq a
+fixupSeq = coerce
+# else
+deriving instance Lift a => Lift (Sequence.Seq a)
+# endif
+
 #else
+-- No containers internals here
+
 instance Lift v => Lift (IntMap.IntMap v) where
   lift m = [| IntMap.fromDistinctAscList m' |] where
     m' = IntMap.toAscList m
