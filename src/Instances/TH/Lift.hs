@@ -63,9 +63,6 @@ import Language.Haskell.TH.Syntax (unsafeTExpCoerce)
 import Language.Haskell.TH
 
 import qualified Data.Foldable as F
-#if __GLASGOW_HASKELL__ >= 708
-import Data.Coerce (coerce)
-#endif
 
 -- Base
 #if !MIN_VERSION_template_haskell(2,9,1)
@@ -99,15 +96,20 @@ import qualified Data.Tree as Tree
 import qualified Data.IntMap.Internal as IntMap
 import qualified Data.IntSet.Internal as IntSet
 import qualified Data.Map.Internal as Map
-import qualified Data.Sequence.Internal as Sequence
 import qualified Data.Set.Internal as Set
+import qualified Data.Sequence.Internal as Sequence
+# if __GLASGOW_HASKELL__ >= 708
+import Data.Coerce (coerce)
+# else
+import Unsafe.Coerce (unsafeCoerce)
+# endif
 #else
 import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
 import qualified Data.Map as Map
-import qualified Data.Sequence as Sequence
 import qualified Data.Set as Set
 #endif
+import qualified Data.Sequence as Sequence
 
 #if !MIN_VERSION_text(1,2,4)
 -- Text
@@ -235,15 +237,6 @@ instance Lift a => Lift (Sequence.ViewR a) where
 #endif
 
 #if HAS_CONTAINERS_INTERNALS
-deriving instance Lift v => Lift (IntMap.IntMap v)
-deriving instance Lift IntSet.IntSet
-deriving instance (Lift k, Lift v) => Lift (Map.Map k v)
-deriving instance Lift a => Lift (Set.Set a)
-
-deriving instance Lift a => Lift (Sequence.Elem a)
-deriving instance Lift a => Lift (Sequence.Digit a)
-deriving instance Lift a => Lift (Sequence.Node a)
-deriving instance Lift a => Lift (Sequence.FingerTree a)
 # if __GLASGOW_HASKELL__ >= 708
 -- This gunk reduces the expression size by a substantial
 -- constant factor, which I imagine is good for compilation
@@ -258,11 +251,53 @@ instance Lift a => Lift (Sequence.Seq a) where
 fixupSeq :: Sequence.FingerTree a -> Sequence.Seq a
 fixupSeq = coerce
 # else
-deriving instance Lift a => Lift (Sequence.Seq a)
+instance Lift a => Lift (Sequence.Seq a) where
+  lift (Sequence.Seq ft) = [| fixupSeq ft' |]
+    where
+      ft' :: Sequence.FingerTree a
+      ft' = unsafeCoerce ft
+  LIFT_TYPED_DEFAULT
+
+fixupSeq :: Sequence.FingerTree a -> Sequence.Seq a
+fixupSeq = unsafeCoerce
 # endif
 
+# if __GLASGOW_HASKELL__ >= 800
+deriving instance Lift a => Lift (Sequence.Elem a)
+deriving instance Lift a => Lift (Sequence.Digit a)
+deriving instance Lift a => Lift (Sequence.Node a)
+deriving instance Lift a => Lift (Sequence.FingerTree a)
+# else
+instance Lift a => Lift (Sequence.Elem a) where
+  lift (Sequence.Elem a) = [| Sequence.Elem a |]
+  LIFT_TYPED_DEFAULT
+instance Lift a => Lift (Sequence.Digit a) where
+  lift (Sequence.One a) = [| Sequence.One a |]
+  lift (Sequence.Two a b) = [| Sequence.Two a b |]
+  lift (Sequence.Three a b c) = [| Sequence.Three a b c |]
+  lift (Sequence.Four a b c d) = [| Sequence.Four a b c d |]
+  LIFT_TYPED_DEFAULT
+instance Lift a => Lift (Sequence.Node a) where
+  lift (Sequence.Node2 s a b) = [| Sequence.Node2 s a b |]
+  lift (Sequence.Node3 s a b c) = [| Sequence.Node3 s a b c |]
+  LIFT_TYPED_DEFAULT
+instance Lift a => Lift (Sequence.FingerTree a) where
+  lift Sequence.EmptyT = [| Sequence.EmptyT |]
+  lift (Sequence.Single a) = [| Sequence.Single a |]
+  lift (Sequence.Deep s pr m sf) = [| Sequence.Deep s pr m sf |]
+  LIFT_TYPED_DEFAULT
+# endif
+
+#endif
+
+#if HAS_CONTAINERS_INTERNALS && __GLASGOW_HASKELL__ >= 800
+deriving instance Lift v => Lift (IntMap.IntMap v)
+deriving instance Lift IntSet.IntSet
+deriving instance (Lift k, Lift v) => Lift (Map.Map k v)
+deriving instance Lift a => Lift (Set.Set a)
+
 #else
--- No containers internals here
+-- No containers internals here, or no Lift deriving
 
 instance Lift v => Lift (IntMap.IntMap v) where
   lift m = [| IntMap.fromDistinctAscList m' |] where
@@ -279,14 +314,16 @@ instance (Lift k, Lift v) => Lift (Map.Map k v) where
     m' = Map.toAscList m
   LIFT_TYPED_DEFAULT
 
-instance Lift a => Lift (Sequence.Seq a) where
-  lift s = [| Sequence.fromList s' |] where
-    s' = F.toList s
-  LIFT_TYPED_DEFAULT
-
 instance Lift a => Lift (Set.Set a) where
   lift s = [| Set.fromDistinctAscList s' |] where
     s' = Set.toAscList s
+  LIFT_TYPED_DEFAULT
+#endif
+
+#if !HAS_CONTAINERS_INTERNALS
+instance Lift a => Lift (Sequence.Seq a) where
+  lift s = [| Sequence.fromList s' |] where
+    s' = F.toList s
   LIFT_TYPED_DEFAULT
 #endif
 
