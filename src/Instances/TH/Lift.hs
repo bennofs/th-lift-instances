@@ -85,7 +85,7 @@ import Data.List.NonEmpty (NonEmpty (..))
 -- Containers
 import qualified Data.Tree as Tree
 
-#if MIN_VERSION_containers(5,10,1)
+#if MIN_VERSION_containers(0,5,10)
 -- recent enough containers exports internals,
 -- so we can use DeriveLift
 -- This way we construct the data type exactly as we have it
@@ -213,18 +213,38 @@ deriving instance Lift a => Lift (Tree.Tree a)
 #else
 instance Lift a => Lift (Tree.Tree a) where
   lift (Tree.Node x xs) = [| Tree.Node x xs |]
+  LIFT_TYPED_DEFAULT
+#endif
+
+#if __GLASGOW_HASKELL__ >= 800
+deriving instance Lift a => Lift (Sequence.ViewL a)
+deriving instance Lift a => Lift (Sequence.ViewR a)
+#else
+instance Lift a => Lift (Sequence.ViewL a) where
+  lift Sequence.EmptyL = [| Sequence.EmptyL |]
+  lift (x Sequence.:< xs) = [| x Sequence.:< xs |]
+  LIFT_TYPED_DEFAULT
+instance Lift a => Lift (Sequence.ViewR a) where
+  lift Sequence.EmptyR = [| Sequence.EmptyR |]
+  lift (xs Sequence.:> x) = [| xs Sequence.:> x |]
+  LIFT_TYPED_DEFAULT
 #endif
 
 #if HAS_CONTAINERS_INTERNALS
 deriving instance Lift v => Lift (IntMap.IntMap v)
 deriving instance Lift IntSet.IntSet
 deriving instance (Lift k, Lift v) => Lift (Map.Map k v)
-deriving instance Lift a => Lift (Sequence.Seq a)
 deriving instance Lift a => Lift (Set.Set a)
+
+deriving instance Lift a => Lift (Sequence.Seq a)
+deriving instance Lift a => Lift (Sequence.Elem a)
+deriving instance Lift a => Lift (Sequence.Digit a)
+deriving instance Lift a => Lift (Sequence.Node a)
+deriving instance Lift a => Lift (Sequence.FingerTree a)
 #else
 instance Lift v => Lift (IntMap.IntMap v) where
-  lift m = [| IntMap.fromList m' |] where
-    m' = IntMap.toList m
+  lift m = [| IntMap.fromDistinctAscList m' |] where
+    m' = IntMap.toAscList m
   LIFT_TYPED_DEFAULT
 
 instance Lift IntSet.IntSet where
@@ -233,8 +253,8 @@ instance Lift IntSet.IntSet where
   LIFT_TYPED_DEFAULT
 
 instance (Lift k, Lift v) => Lift (Map.Map k v) where
-  lift m = [| Map.fromList m' |] where
-    m' = Map.toList m
+  lift m = [| Map.fromDistinctAscList m' |] where
+    m' = Map.toAscList m
   LIFT_TYPED_DEFAULT
 
 instance Lift a => Lift (Sequence.Seq a) where
@@ -243,8 +263,8 @@ instance Lift a => Lift (Sequence.Seq a) where
   LIFT_TYPED_DEFAULT
 
 instance Lift a => Lift (Set.Set a) where
-  lift s = [| Set.fromList s' |] where
-    s' = Set.toList s
+  lift s = [| Set.fromDistinctAscList s' |] where
+    s' = Set.toAscList s
   LIFT_TYPED_DEFAULT
 #endif
 
