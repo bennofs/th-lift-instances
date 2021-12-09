@@ -111,6 +111,7 @@ import qualified Data.Text as Text
 import qualified Data.Text.Lazy as Text.Lazy
 #endif
 
+#if !MIN_VERSION_bytestring(0,11,2)
 -- ByteString
 import qualified Data.ByteString as ByteString
 import qualified Data.ByteString.Unsafe as ByteString.Unsafe
@@ -118,6 +119,7 @@ import qualified Data.ByteString.Lazy as ByteString.Lazy
 import           System.IO.Unsafe (unsafePerformIO)
 #if !MIN_VERSION_template_haskell(2, 8, 0)
 import qualified Data.ByteString.Char8 as ByteString.Char8
+#endif
 #endif
 
 -- Vector
@@ -262,6 +264,7 @@ instance Lift Text.Lazy.Text where
   LIFT_TYPED_DEFAULT
 #endif
 
+#if !MIN_VERSION_bytestring(0,11,2)
 --------------------------------------------------------------------------------
 -- ByteString
 instance Lift ByteString.ByteString where
@@ -285,6 +288,7 @@ instance Lift ByteString.Lazy.ByteString where
     where
       b = ByteString.Lazy.toChunks lb
   LIFT_TYPED_DEFAULT
+#endif
 
 --------------------------------------------------------------------------------
 -- Vector
