@@ -62,8 +62,6 @@ import Language.Haskell.TH.Syntax (unsafeTExpCoerce)
 #endif
 import Language.Haskell.TH
 
-import qualified Data.Foldable as F
-
 -- Base
 #if !MIN_VERSION_template_haskell(2,9,1)
 import Data.Int
@@ -108,8 +106,9 @@ import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
 import qualified Data.Map as Map
 import qualified Data.Set as Set
-#endif
 import qualified Data.Sequence as Sequence
+import qualified Data.Foldable as F
+#endif
 
 #if !MIN_VERSION_text(1,2,4)
 -- Text
@@ -237,33 +236,35 @@ instance Lift a => Lift (Sequence.ViewR a) where
 #endif
 
 #if HAS_CONTAINERS_INTERNALS
-# if __GLASGOW_HASKELL__ >= 708
--- This gunk reduces the expression size by a substantial
+-- The coercion gunk reduces the expression size by a substantial
 -- constant factor, which I imagine is good for compilation
 -- speed.
 instance Lift a => Lift (Sequence.Seq a) where
-  lift (Sequence.Seq ft) = [| fixupSeq ft' |]
+  lift xs = [| fixupSeq ft' |]
     where
+      -- The tree produced by zipWith has the same shape as
+      -- that of its first argument. replicate produces a shallow
+      -- tree, which is usually desirable.
+      Sequence.Seq rebalanced =
+        Sequence.zipWith
+          (flip const)
+          (Sequence.replicate (Sequence.length xs) ())
+          xs
       ft' :: Sequence.FingerTree a
-      ft' = coerce ft
+      ft' = stripElem rebalanced
   LIFT_TYPED_DEFAULT
 
 fixupSeq :: Sequence.FingerTree a -> Sequence.Seq a
+stripElem :: Sequence.FingerTree (Sequence.Elem a) -> Sequence.FingerTree a
+# if __GLASGOW_HASKELL__ >= 708
 fixupSeq = coerce
+stripElem = coerce
 # else
-instance Lift a => Lift (Sequence.Seq a) where
-  lift (Sequence.Seq ft) = [| fixupSeq ft' |]
-    where
-      ft' :: Sequence.FingerTree a
-      ft' = unsafeCoerce ft
-  LIFT_TYPED_DEFAULT
-
-fixupSeq :: Sequence.FingerTree a -> Sequence.Seq a
 fixupSeq = unsafeCoerce
+stripElem = unsafeCoerce
 # endif
 
 # if __GLASGOW_HASKELL__ >= 800
-deriving instance Lift a => Lift (Sequence.Elem a)
 deriving instance Lift a => Lift (Sequence.Digit a)
 deriving instance Lift a => Lift (Sequence.Node a)
 deriving instance Lift a => Lift (Sequence.FingerTree a)
