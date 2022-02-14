@@ -1,5 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 #if __GLASGOW_HASKELL__ >= 800
 {-# LANGUAGE TemplateHaskellQuotes #-}
 {-# LANGUAGE DeriveLift #-}
@@ -61,8 +62,6 @@ import Language.Haskell.TH.Syntax (unsafeTExpCoerce)
 #endif
 import Language.Haskell.TH
 
-import qualified Data.Foldable as F
-
 -- Base
 #if !MIN_VERSION_template_haskell(2,9,1)
 import Data.Int
@@ -85,7 +84,7 @@ import Data.List.NonEmpty (NonEmpty (..))
 -- Containers
 import qualified Data.Tree as Tree
 
-#if MIN_VERSION_containers(5,10,1)
+#if MIN_VERSION_containers(0,5,10)
 -- recent enough containers exports internals,
 -- so we can use DeriveLift
 -- This way we construct the data type exactly as we have it
@@ -95,14 +94,20 @@ import qualified Data.Tree as Tree
 import qualified Data.IntMap.Internal as IntMap
 import qualified Data.IntSet.Internal as IntSet
 import qualified Data.Map.Internal as Map
-import qualified Data.Sequence.Internal as Sequence
 import qualified Data.Set.Internal as Set
+import qualified Data.Sequence.Internal as Sequence
+# if __GLASGOW_HASKELL__ >= 708
+import Data.Coerce (coerce)
+# else
+import Unsafe.Coerce (unsafeCoerce)
+# endif
 #else
 import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
 import qualified Data.Map as Map
-import qualified Data.Sequence as Sequence
 import qualified Data.Set as Set
+import qualified Data.Sequence as Sequence
+import qualified Data.Foldable as F
 #endif
 
 #if !MIN_VERSION_text(1,2,4)
@@ -215,18 +220,91 @@ deriving instance Lift a => Lift (Tree.Tree a)
 #else
 instance Lift a => Lift (Tree.Tree a) where
   lift (Tree.Node x xs) = [| Tree.Node x xs |]
+  LIFT_TYPED_DEFAULT
+#endif
+
+#if __GLASGOW_HASKELL__ >= 800
+deriving instance Lift a => Lift (Sequence.ViewL a)
+deriving instance Lift a => Lift (Sequence.ViewR a)
+#else
+instance Lift a => Lift (Sequence.ViewL a) where
+  lift Sequence.EmptyL = [| Sequence.EmptyL |]
+  lift (x Sequence.:< xs) = [| x Sequence.:< xs |]
+  LIFT_TYPED_DEFAULT
+instance Lift a => Lift (Sequence.ViewR a) where
+  lift Sequence.EmptyR = [| Sequence.EmptyR |]
+  lift (xs Sequence.:> x) = [| xs Sequence.:> x |]
+  LIFT_TYPED_DEFAULT
 #endif
 
 #if HAS_CONTAINERS_INTERNALS
+-- The coercion gunk reduces the expression size by a substantial
+-- constant factor, which I imagine is good for compilation
+-- speed.
+instance Lift a => Lift (Sequence.Seq a) where
+  lift xs = [| fixupSeq ft' |]
+    where
+      -- The tree produced by zipWith has the same shape as
+      -- that of its first argument. replicate produces a shallow
+      -- tree, which is usually desirable.
+      Sequence.Seq rebalanced =
+        Sequence.zipWith
+          (flip const)
+          (Sequence.replicate (Sequence.length xs) ())
+          xs
+      ft' :: Sequence.FingerTree a
+      ft' = stripElem rebalanced
+  LIFT_TYPED_DEFAULT
+
+fixupSeq :: Sequence.FingerTree a -> Sequence.Seq a
+stripElem :: Sequence.FingerTree (Sequence.Elem a) -> Sequence.FingerTree a
+# if __GLASGOW_HASKELL__ >= 708
+fixupSeq = coerce
+stripElem = coerce
+# else
+fixupSeq = unsafeCoerce
+stripElem = unsafeCoerce
+# endif
+
+# if __GLASGOW_HASKELL__ >= 800
+deriving instance Lift a => Lift (Sequence.Digit a)
+deriving instance Lift a => Lift (Sequence.Node a)
+deriving instance Lift a => Lift (Sequence.FingerTree a)
+# else
+instance Lift a => Lift (Sequence.Elem a) where
+  lift (Sequence.Elem a) = [| Sequence.Elem a |]
+  LIFT_TYPED_DEFAULT
+instance Lift a => Lift (Sequence.Digit a) where
+  lift (Sequence.One a) = [| Sequence.One a |]
+  lift (Sequence.Two a b) = [| Sequence.Two a b |]
+  lift (Sequence.Three a b c) = [| Sequence.Three a b c |]
+  lift (Sequence.Four a b c d) = [| Sequence.Four a b c d |]
+  LIFT_TYPED_DEFAULT
+instance Lift a => Lift (Sequence.Node a) where
+  lift (Sequence.Node2 s a b) = [| Sequence.Node2 s a b |]
+  lift (Sequence.Node3 s a b c) = [| Sequence.Node3 s a b c |]
+  LIFT_TYPED_DEFAULT
+instance Lift a => Lift (Sequence.FingerTree a) where
+  lift Sequence.EmptyT = [| Sequence.EmptyT |]
+  lift (Sequence.Single a) = [| Sequence.Single a |]
+  lift (Sequence.Deep s pr m sf) = [| Sequence.Deep s pr m sf |]
+  LIFT_TYPED_DEFAULT
+# endif
+
+#endif
+
+#if HAS_CONTAINERS_INTERNALS && __GLASGOW_HASKELL__ >= 800
 deriving instance Lift v => Lift (IntMap.IntMap v)
 deriving instance Lift IntSet.IntSet
 deriving instance (Lift k, Lift v) => Lift (Map.Map k v)
-deriving instance Lift a => Lift (Sequence.Seq a)
 deriving instance Lift a => Lift (Set.Set a)
+
 #else
+-- No containers internals here, or no Lift deriving
+
 instance Lift v => Lift (IntMap.IntMap v) where
-  lift m = [| IntMap.fromList m' |] where
-    m' = IntMap.toList m
+  lift m = [| IntMap.fromDistinctAscList m' |] where
+    m' = IntMap.toAscList m
   LIFT_TYPED_DEFAULT
 
 instance Lift IntSet.IntSet where
@@ -235,18 +313,20 @@ instance Lift IntSet.IntSet where
   LIFT_TYPED_DEFAULT
 
 instance (Lift k, Lift v) => Lift (Map.Map k v) where
-  lift m = [| Map.fromList m' |] where
-    m' = Map.toList m
-  LIFT_TYPED_DEFAULT
-
-instance Lift a => Lift (Sequence.Seq a) where
-  lift s = [| Sequence.fromList s' |] where
-    s' = F.toList s
+  lift m = [| Map.fromDistinctAscList m' |] where
+    m' = Map.toAscList m
   LIFT_TYPED_DEFAULT
 
 instance Lift a => Lift (Set.Set a) where
-  lift s = [| Set.fromList s' |] where
-    s' = Set.toList s
+  lift s = [| Set.fromDistinctAscList s' |] where
+    s' = Set.toAscList s
+  LIFT_TYPED_DEFAULT
+#endif
+
+#if !HAS_CONTAINERS_INTERNALS
+instance Lift a => Lift (Sequence.Seq a) where
+  lift s = [| Sequence.fromList s' |] where
+    s' = F.toList s
   LIFT_TYPED_DEFAULT
 #endif
 
