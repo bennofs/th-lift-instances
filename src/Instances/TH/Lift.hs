@@ -82,6 +82,8 @@ import Data.List.NonEmpty (NonEmpty (..))
 #endif
 
 -- Containers
+
+#if !MIN_VERSION_containers(0,6,6)
 import qualified Data.Tree as Tree
 
 #if MIN_VERSION_containers(0,5,10)
@@ -109,6 +111,7 @@ import qualified Data.Set as Set
 import qualified Data.Sequence as Sequence
 import qualified Data.Foldable as F
 #endif
+# endif
 
 #if !MIN_VERSION_text(1,2,4)
 -- Text
@@ -215,6 +218,7 @@ instance Lift a => Lift (NonEmpty a) where
 -- Containers
 --
 
+#if !MIN_VERSION_containers(0,6,6)
 #if __GLASGOW_HASKELL__ >= 800
 deriving instance Lift a => Lift (Tree.Tree a)
 #else
@@ -236,7 +240,7 @@ instance Lift a => Lift (Sequence.ViewR a) where
   lift (xs Sequence.:> x) = [| xs Sequence.:> x |]
   LIFT_TYPED_DEFAULT
 #endif
-
+ 
 #if HAS_CONTAINERS_INTERNALS
 -- The coercion gunk reduces the expression size by a substantial
 -- constant factor, which I imagine is good for compilation
@@ -329,6 +333,8 @@ instance Lift a => Lift (Sequence.Seq a) where
     s' = F.toList s
   LIFT_TYPED_DEFAULT
 #endif
+
+# endif
 
 #if !MIN_VERSION_text(1,2,4)
 --------------------------------------------------------------------------------
